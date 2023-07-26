@@ -51,6 +51,7 @@ private:
     bool m_sizeAdjusted;
     QSettings m_settings;
     QMenu m_trayIconMenu;
+    QActionGroup m_actionGroup;
     QSystemTrayIcon m_trayIcon;
     QProcess m_clash;
     QNetworkAccessManager m_netMgr;

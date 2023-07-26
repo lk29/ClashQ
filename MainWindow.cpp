@@ -11,12 +11,10 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
     , m_sizeAdjusted(false)
     , m_settings(iniFilePath(), QSettings::IniFormat)
+    , m_actionGroup(nullptr)
 {
     ui->setupUi(this);
     ui->logEdit->setFont(QFont(QStringLiteral("Consolas"), 10));
-
-    QActionGroup *actionGroup = new QActionGroup(this);
-    connect(actionGroup, &QActionGroup::triggered, this, &MainWindow::actionGroupTriggered);
 
     QStringList profiles = m_settings.value(QStringLiteral("profile")).toStringList();
     profiles.removeAll(QString());
@@ -28,8 +26,9 @@ MainWindow::MainWindow(QWidget *parent)
         QAction *action = m_trayIconMenu.addAction(text);
         action->setData(prof);
         action->setCheckable(true);
-        actionGroup->addAction(action);
+        m_actionGroup.addAction(action);
     }
+    connect(&m_actionGroup, &QActionGroup::triggered, this, &MainWindow::actionGroupTriggered);
 
     m_trayIconMenu.addSeparator();
     QAction *actionOpenCfg = m_trayIconMenu.addAction(QStringLiteral("Open Config"));
@@ -39,7 +38,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     m_trayIconMenu.addSeparator();
     QAction *actionQuit = m_trayIconMenu.addAction(QStringLiteral("Quit"));
-    connect(actionQuit, &QAction::triggered, QCoreApplication::instance(), &QCoreApplication::quit);
+    connect(actionQuit, &QAction::triggered, this, &MainWindow::close);
 
     setTrayIcon(QIcon::Disabled);
     m_trayIcon.setContextMenu(&m_trayIconMenu);
@@ -60,12 +59,14 @@ MainWindow::MainWindow(QWidget *parent)
 
     if (profiles.isEmpty()) {
         appendLog("no profile");
-        show();
     } else {
-        auto actions = actionGroup->actions();
-        actions.first()->setChecked(true);
-
-        fetchConfig(profiles.first());
+        auto actions = m_actionGroup.actions();
+        int profIdx = m_settings.value(QStringLiteral("recent"), 0).toInt();
+        if (profIdx < 0 || profIdx >= actions.size()) {
+            profIdx = 0;
+        }
+        actions.at(profIdx)->setChecked(true);
+        fetchConfig(profiles.at(profIdx));
     }
 }
 
@@ -173,8 +174,20 @@ void MainWindow::appendLog(T text)
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    hide();
-    event->ignore();
+    if (event->spontaneous()) {
+        event->ignore();
+        hide();
+    } else {
+        event->accept();
+
+        auto actions = m_actionGroup.actions();
+        for (int i = 0; i < actions.size(); ++i) {
+            if (actions.at(i)->isChecked()) {
+                m_settings.setValue(QStringLiteral("recent"), i);
+                return;
+            }
+        }
+    }
 }
 
 bool MainWindow::event(QEvent *event)
