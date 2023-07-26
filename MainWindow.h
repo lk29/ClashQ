@@ -23,6 +23,7 @@ public:
 private:
     void fetchConfig(const QString &profile);
     QByteArray decryptConfig(const QByteArray &ba);
+    void setTrayIcon(QIcon::Mode mode);
 
     virtual void closeEvent(QCloseEvent *event) override;
     virtual bool event(QEvent *event) override;
@@ -34,8 +35,11 @@ private slots:
     void clashErrorOccurred(QProcess::ProcessError error);
     void clashStderrReady();
     void clashStdoutReady();
+    void clashStarted();
     void trayIconActivated(QSystemTrayIcon::ActivationReason reason);
     void actionGroupTriggered(QAction *action);
+    void openCfgTriggered();
+    void openClashCfgTriggered();
 
 private:
     Ui::MainWindow *ui;

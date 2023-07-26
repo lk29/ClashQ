@@ -1,5 +1,6 @@
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
+#include <QDesktopServices>
 #include <QDir>
 #include <QNetworkReply>
 #include <openssl/bio.h>
@@ -19,18 +20,28 @@ MainWindow::MainWindow(QWidget *parent)
 
     QStringList profiles = m_settings.value(QStringLiteral("profile")).toStringList();
     profiles.removeAll(QString());
-    for (QString &prof : profiles) {
-        prof[0] = prof[0].toUpper();
-        QAction *action = m_trayIconMenu.addAction(prof);
+    for (const QString &prof : qAsConst(profiles)) {
+        QString text("Profile \"");
+        text += prof;
+        text += '\"';
+
+        QAction *action = m_trayIconMenu.addAction(text);
+        action->setData(prof);
         action->setCheckable(true);
         actionGroup->addAction(action);
     }
 
     m_trayIconMenu.addSeparator();
+    QAction *actionOpenCfg = m_trayIconMenu.addAction(QStringLiteral("Open Config"));
+    connect(actionOpenCfg, &QAction::triggered, this, &MainWindow::openCfgTriggered);
+    QAction *actionOpenClashCfg = m_trayIconMenu.addAction(QStringLiteral("Open Clash Config"));
+    connect(actionOpenClashCfg, &QAction::triggered, this, &MainWindow::openClashCfgTriggered);
+
+    m_trayIconMenu.addSeparator();
     QAction *actionQuit = m_trayIconMenu.addAction(QStringLiteral("Quit"));
     connect(actionQuit, &QAction::triggered, QCoreApplication::instance(), &QCoreApplication::quit);
 
-    m_trayIcon.setIcon(QIcon(QStringLiteral(":/app.ico")));
+    setTrayIcon(QIcon::Disabled);
     m_trayIcon.setContextMenu(&m_trayIconMenu);
     m_trayIcon.show();
     connect(&m_trayIcon, &QSystemTrayIcon::activated, this, &MainWindow::trayIconActivated);
@@ -44,6 +55,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(&m_clash, &QProcess::errorOccurred, this, &MainWindow::clashErrorOccurred);
     connect(&m_clash, &QProcess::readyReadStandardError, this, &MainWindow::clashStderrReady);
     connect(&m_clash, &QProcess::readyReadStandardOutput, this, &MainWindow::clashStdoutReady);
+    connect(&m_clash, &QProcess::started, this, &MainWindow::clashStarted);
 
     if (profiles.isEmpty()) {
         ui->logEdit->appendPlainText(QStringLiteral("ClashQ: no profile"));
@@ -66,6 +78,11 @@ MainWindow::~MainWindow()
 
 void MainWindow::fetchConfig(const QString &profile)
 {
+    QString tooltip("Profile \"");
+    tooltip += profile;
+    tooltip += '\"';
+    m_trayIcon.setToolTip(tooltip);
+
     QUrl url(m_settings.value(QStringLiteral("url")).toString());
     if (!url.isValid()) {
         QString text("ClashQ: ");
@@ -126,6 +143,16 @@ QByteArray MainWindow::decryptConfig(const QByteArray &ba)
 
     BIO_free_all(cipherBio);
     return result;
+}
+
+void MainWindow::setTrayIcon(QIcon::Mode mode)
+{
+    QIcon icon(QStringLiteral(":/app.ico"));
+    if (mode == QIcon::Disabled) {
+        m_trayIcon.setIcon(icon.pixmap(16, 16, mode));
+    } else {
+        m_trayIcon.setIcon(icon);
+    }
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -228,19 +255,42 @@ void MainWindow::clashStdoutReady()
     ui->logEdit->appendPlainText(subprocess->readAll().trimmed());
 }
 
+void MainWindow::clashStarted()
+{
+    setTrayIcon(QIcon::Normal);
+}
+
 void MainWindow::trayIconActivated(QSystemTrayIcon::ActivationReason reason)
 {
     if (reason == QSystemTrayIcon::Trigger) {
-        setVisible(!isVisible());
+        if (isVisible()) {
+            hide();
+        } else {
+            showNormal();
+            activateWindow();
+        }
     }
 }
 
 void MainWindow::actionGroupTriggered(QAction *action)
 {
     if (m_clash.state() == QProcess::Running) {
+        setTrayIcon(QIcon::Disabled);
         m_clash.close();
         m_clash.waitForFinished();
     }
 
-    fetchConfig(action->text());
+    fetchConfig(action->data().toString().toLower());
+}
+
+void MainWindow::openCfgTriggered()
+{
+    QDir dir(QCoreApplication::applicationDirPath());
+    QDesktopServices::openUrl(QUrl::fromLocalFile(dir.absoluteFilePath("config.ini")));
+}
+
+void MainWindow::openClashCfgTriggered()
+{
+    QDir dir(m_clash.workingDirectory());
+    QDesktopServices::openUrl(QUrl::fromLocalFile(dir.absoluteFilePath("config.yaml")));
 }
