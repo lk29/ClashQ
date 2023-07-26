@@ -108,7 +108,10 @@ void MainWindow::fetchConfig(const QString &profile)
     QNetworkReply *reply = m_netMgr.get(request);
     connect(reply, &QNetworkReply::finished, this, &MainWindow::replyFinished);
 
-    appendLog("fetching configuration");
+    QString logText("fetching configuration for profile \"");
+    logText += profile;
+    logText += '\"';
+    appendLog(logText);
 }
 
 QByteArray MainWindow::decryptConfig(const QByteArray &ba)
