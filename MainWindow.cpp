@@ -53,6 +53,7 @@ MainWindow::MainWindow(QWidget *parent)
     m_clash.setProgram(dir.absoluteFilePath("clash-windows-amd64-v3.exe"));
 
     connect(&m_clash, &QProcess::errorOccurred, this, &MainWindow::clashErrorOccurred);
+    connect(&m_clash, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this, &MainWindow::clashFinished);
     connect(&m_clash, &QProcess::readyReadStandardError, this, &MainWindow::clashStderrReady);
     connect(&m_clash, &QProcess::readyReadStandardOutput, this, &MainWindow::clashStdoutReady);
     connect(&m_clash, &QProcess::started, this, &MainWindow::clashStarted);
@@ -243,6 +244,11 @@ void MainWindow::clashErrorOccurred(QProcess::ProcessError error)
     }
 }
 
+void MainWindow::clashFinished(int exitCode, QProcess::ExitStatus exitStatus)
+{
+    setTrayIcon(QIcon::Disabled);
+}
+
 void MainWindow::clashStderrReady()
 {
     QProcess *subprocess = qobject_cast<QProcess *>(sender());
@@ -275,7 +281,6 @@ void MainWindow::trayIconActivated(QSystemTrayIcon::ActivationReason reason)
 void MainWindow::actionGroupTriggered(QAction *action)
 {
     if (m_clash.state() == QProcess::Running) {
-        setTrayIcon(QIcon::Disabled);
         m_clash.close();
         m_clash.waitForFinished();
     }

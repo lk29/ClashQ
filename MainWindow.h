@@ -33,6 +33,7 @@ private:
 private slots:
     void replyFinished();
     void clashErrorOccurred(QProcess::ProcessError error);
+    void clashFinished(int exitCode, QProcess::ExitStatus exitStatus);
     void clashStderrReady();
     void clashStdoutReady();
     void clashStarted();
