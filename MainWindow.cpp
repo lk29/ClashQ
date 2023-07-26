@@ -8,6 +8,7 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
+    , m_sizeAdjusted(false)
     , m_settings(iniFilePath(), QSettings::IniFormat)
 {
     ui->setupUi(this);
@@ -131,6 +132,25 @@ void MainWindow::closeEvent(QCloseEvent *event)
 {
     hide();
     event->ignore();
+}
+
+bool MainWindow::event(QEvent *event)
+{
+    if (event->type() == QEvent::ShowToParent && !m_sizeAdjusted) {
+        m_sizeAdjusted = true;
+
+        QSizeF newSize;
+        QFontMetricsF fm = fontMetrics();
+        newSize.setWidth(fm.averageCharWidth() * 230);
+        newSize.setHeight(newSize.width() * 9 / 16);
+
+        QSizeF oldSize = size();
+        int dx = qRound((newSize.width() - oldSize.width())/2.0);
+        int dy = qRound((newSize.height() - oldSize.height())/2.0);
+
+        setGeometry(geometry().adjusted(-dx, -dy, dx, dy));
+    }
+    return QMainWindow::event(event);
 }
 
 QString MainWindow::iniFilePath()

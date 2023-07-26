@@ -24,7 +24,8 @@ private:
     void fetchConfig(const QString &profile);
     QByteArray decryptConfig(const QByteArray &ba);
 
-    void closeEvent(QCloseEvent *event) override;
+    virtual void closeEvent(QCloseEvent *event) override;
+    virtual bool event(QEvent *event) override;
 
     static QString iniFilePath();
 
@@ -39,6 +40,7 @@ private slots:
 private:
     Ui::MainWindow *ui;
     char m_iv[9];
+    bool m_sizeAdjusted;
     QSettings m_settings;
     QMenu m_trayIconMenu;
     QSystemTrayIcon m_trayIcon;
