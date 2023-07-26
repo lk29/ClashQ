@@ -25,6 +25,9 @@ private:
     QByteArray decryptConfig(const QByteArray &ba);
     void setTrayIcon(QIcon::Mode mode);
 
+    template<typename T>
+    void appendLog(T text);
+
     virtual void closeEvent(QCloseEvent *event) override;
     virtual bool event(QEvent *event) override;
 

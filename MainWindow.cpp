@@ -59,7 +59,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(&m_clash, &QProcess::started, this, &MainWindow::clashStarted);
 
     if (profiles.isEmpty()) {
-        ui->logEdit->appendPlainText(QStringLiteral("ClashQ: no profile"));
+        appendLog("no profile");
         show();
     } else {
         auto actions = actionGroup->actions();
@@ -86,9 +86,7 @@ void MainWindow::fetchConfig(const QString &profile)
 
     QUrl url(m_settings.value(QStringLiteral("url")).toString());
     if (!url.isValid()) {
-        QString text("ClashQ: ");
-        text += url.errorString();
-        ui->logEdit->appendPlainText(text);
+        appendLog(url.errorString());
         return;
     }
 
@@ -109,7 +107,7 @@ void MainWindow::fetchConfig(const QString &profile)
     QNetworkReply *reply = m_netMgr.get(request);
     connect(reply, &QNetworkReply::finished, this, &MainWindow::replyFinished);
 
-    ui->logEdit->appendPlainText(QStringLiteral("ClashQ: fetching configuration"));
+    appendLog("fetching configuration");
 }
 
 QByteArray MainWindow::decryptConfig(const QByteArray &ba)
@@ -118,7 +116,7 @@ QByteArray MainWindow::decryptConfig(const QByteArray &ba)
 
     QString key = m_settings.value(QStringLiteral("key")).toString();
     if (key.isEmpty()) {
-        ui->logEdit->appendPlainText(QStringLiteral("ClashQ: key is empty"));
+        appendLog("key is empty");
         return result;
     }
 
@@ -139,7 +137,7 @@ QByteArray MainWindow::decryptConfig(const QByteArray &ba)
 
     if (!BIO_get_cipher_status(cipherBio)) {
         result.clear();
-        ui->logEdit->appendPlainText(QStringLiteral("ClashQ: failed to decrypt config"));
+        appendLog("failed to decrypt configuration");
     }
 
     BIO_free_all(cipherBio);
@@ -154,6 +152,23 @@ void MainWindow::setTrayIcon(QIcon::Mode mode)
     } else {
         m_trayIcon.setIcon(icon);
     }
+}
+
+template<typename T>
+void MainWindow::appendLog(T text)
+{
+    QDateTime now(QDateTime::currentDateTime());
+    // Make the formatted string have offset from UTC info.
+    // Qt's bug?
+    // https://bugreports.qt.io/browse/QTBUG-26161
+    now.setOffsetFromUtc(now.offsetFromUtc());
+
+    QString logText("<font color='#5c00e6'>");
+    logText += now.toString(Qt::ISODate);
+    logText += "</font>: ";
+    logText += text;
+
+    ui->logEdit->appendHtml(logText);
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -193,18 +208,14 @@ void MainWindow::replyFinished()
     reply->deleteLater();
 
     if (reply->error() != QNetworkReply::NoError) {
-        QString text("ClashQ: ");
-        text += reply->errorString();
-        ui->logEdit->appendPlainText(text);
+        appendLog(reply->errorString());
         return;
     }
 
     QDir dir(m_clash.workingDirectory());
     QFile file(dir.absoluteFilePath(QStringLiteral("config.yaml")));
     if (!file.open(QIODevice::WriteOnly)) {
-        QString text("ClashQ: ");
-        text += file.errorString();
-        ui->logEdit->appendPlainText(text);
+        appendLog(file.errorString());
         return;
     }
 
@@ -212,7 +223,7 @@ void MainWindow::replyFinished()
     if (ba.isEmpty()) {
         return;
     }
-    ui->logEdit->appendPlainText(QStringLiteral("ClashQ: decrypt configuration successfully"));
+    appendLog("decrypt configuration successfully");
 
     file.write(ba);
     file.close();
@@ -224,27 +235,27 @@ void MainWindow::clashErrorOccurred(QProcess::ProcessError error)
 {
     switch (error) {
     case QProcess::FailedToStart:
-        ui->logEdit->appendPlainText(QStringLiteral("ClashQ: failed to start clash subprocess"));
+        appendLog("failed to start clash subprocess");
         break;
     case QProcess::Crashed:
-        ui->logEdit->appendPlainText(QStringLiteral("ClashQ: clash subprocess crashed"));
+        appendLog("clash subprocess crashed");
         break;
     case QProcess::Timedout:
-        ui->logEdit->appendPlainText(QStringLiteral("ClashQ: wait for clash subprocess time out"));
+        appendLog("wait for clash subprocess time out");
         break;
     case QProcess::WriteError:
-        ui->logEdit->appendPlainText(QStringLiteral("ClashQ: failed to write to clash subprocess"));
+        appendLog("failed to write to clash subprocess");
         break;
     case QProcess::ReadError:
-        ui->logEdit->appendPlainText(QStringLiteral("ClashQ: failed to read from clash subprocess"));
+        appendLog("failed to read from clash subprocess");
         break;
     default:
-        ui->logEdit->appendPlainText(QStringLiteral("ClashQ: unknown error occurred in clash subprocess"));
+        appendLog("unknown error occurred in clash subprocess");
         break;
     }
 }
 
-void MainWindow::clashFinished(int exitCode, QProcess::ExitStatus exitStatus)
+void MainWindow::clashFinished(int /*exitCode*/, QProcess::ExitStatus /*exitStatus*/)
 {
     setTrayIcon(QIcon::Disabled);
 }
