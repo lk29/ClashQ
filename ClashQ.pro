@@ -22,7 +22,12 @@ INCLUDEPATH += D:\Downloads\openssl-1.0.2\inc32
 
 LIBS += -LD:\Downloads\openssl-1.0.2\out32dll -llibeay32
 
+RC_ICONS = app.ico
+
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+RESOURCES += \
+    ClashQ.qrc

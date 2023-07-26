@@ -29,9 +29,10 @@ MainWindow::MainWindow(QWidget *parent)
     QAction *actionQuit = m_trayIconMenu.addAction(QStringLiteral("Quit"));
     connect(actionQuit, &QAction::triggered, QCoreApplication::instance(), &QCoreApplication::quit);
 
-    connect(&m_trayIcon, &QSystemTrayIcon::activated, this, &MainWindow::trayIconActivated);
+    m_trayIcon.setIcon(QIcon(QStringLiteral(":/app.ico")));
     m_trayIcon.setContextMenu(&m_trayIconMenu);
     m_trayIcon.show();
+    connect(&m_trayIcon, &QSystemTrayIcon::activated, this, &MainWindow::trayIconActivated);
 
     QDir dir(QCoreApplication::applicationDirPath());
     dir.cd(QStringLiteral("clash"));
