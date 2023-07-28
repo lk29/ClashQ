@@ -60,6 +60,7 @@ SOURCES += \
     QCustomPlot/src/selectionrect.cpp \
     QCustomPlot/src/vector2d.cpp \
     TrafficPage.cpp \
+    TrafficSpeedTicker.cpp \
     main.cpp \
     MainWindow.cpp
 
@@ -119,7 +120,8 @@ HEADERS += \
     QCustomPlot/src/selectiondecorator-bracket.h \
     QCustomPlot/src/selectionrect.h \
     QCustomPlot/src/vector2d.h \
-    TrafficPage.h
+    TrafficPage.h \
+    TrafficSpeedTicker.h
 
 FORMS += \
     LogPage.ui \

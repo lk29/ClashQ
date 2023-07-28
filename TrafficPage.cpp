@@ -1,6 +1,7 @@
 #include "Application.h"
 #include "QCustomPlot/src/plottables/plottable-graph.h"
 #include "TrafficPage.h"
+#include "TrafficSpeedTicker.h"
 #include "ui_TrafficPage.h"
 #include <QJsonDocument>
 #include <QNetworkReply>
@@ -15,6 +16,7 @@ TrafficPage::TrafficPage(QWidget *parent) :
     ui->plot->xAxis->setRange(0, s_maxX);
     ui->plot->xAxis->setTickLabels(false);
     ui->plot->xAxis->setTicks(false);
+    ui->plot->yAxis->setTicker(QSharedPointer<TrafficSpeedTicker>(new TrafficSpeedTicker()));
 
     QCPGraph *ulGraph = ui->plot->addGraph();
     QColor ulFillColor(Qt::blue);
