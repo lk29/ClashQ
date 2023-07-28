@@ -1,4 +1,5 @@
 #include "Application.h"
+#include "QCustomPlot/src/plottables/plottable-graph.h"
 #include "TrafficPage.h"
 #include "ui_TrafficPage.h"
 #include <QJsonDocument>
@@ -11,39 +12,23 @@ TrafficPage::TrafficPage(QWidget *parent) :
     ui(new Ui::TrafficPage)
 {
     ui->setupUi(this);
-    ui->chartView->setRenderHints(QPainter::Antialiasing);
+    ui->plot->xAxis->setRange(0, s_maxX);
+    ui->plot->xAxis->setTickLabels(false);
+    ui->plot->xAxis->setTicks(false);
 
-    QChart *chart = ui->chartView->chart();
-    chart->legend()->hide();
-    chart->setBackgroundRoundness(0);
-    chart->setMargins(QMargins(10, 10, 10, 10));
-    chart->setContentsMargins(0, 0, 0, 0);
+    QCPGraph *ulGraph = ui->plot->addGraph();
+    QColor ulFillColor(Qt::blue);
+    ulFillColor.setAlpha(100);
+    QBrush ulBrush(ulFillColor);
+    ulGraph->setPen(QPen(Qt::blue));
+    ulGraph->setBrush(ulBrush);
 
-    QColor upColor(Qt::blue);
-    QColor downColor(Qt::red);
-    upColor.setAlpha(100);
-    downColor.setAlpha(100);
-
-    QAreaSeries *upSeries = new QAreaSeries(new QLineSeries());
-    QAreaSeries *downSeries = new QAreaSeries(new QLineSeries());
-    upSeries->setPen(QPen(Qt::blue));
-    upSeries->setColor(upColor);
-    downSeries->setPen(QPen(Qt::red));
-    downSeries->setColor(downColor);
-
-    chart->addSeries(upSeries);
-    chart->addSeries(downSeries);
-    chart->createDefaultAxes();
-
-    QAbstractAxis *xAxis = chart->axisX();
-    QPen pen(xAxis->gridLinePen());
-    pen.setStyle(Qt::DashLine);
-    xAxis->setRange(0, s_maxX);
-    xAxis->setLabelsVisible(false);
-    xAxis->setGridLinePen(pen);
-
-    QAbstractAxis *yAxis = chart->axisY();
-    yAxis->setGridLinePen(pen);
+    QCPGraph *dlGraph = ui->plot->addGraph();
+    QColor dlFillColor(Qt::red);
+    dlFillColor.setAlpha(100);
+    QBrush dlBrush(dlFillColor);
+    dlGraph->setPen(QPen(Qt::red));
+    dlGraph->setBrush(dlBrush);
 
     sendRequest();
 }
@@ -59,50 +44,36 @@ void TrafficPage::replyReadyRead()
 
     QJsonDocument jsonDoc(QJsonDocument::fromJson(reply->readAll()));
     QJsonObject jsonObj(jsonDoc.object());
-    QJsonValueRef upValue = jsonObj[QLatin1String("up")];
-    QJsonValueRef downValue = jsonObj[QLatin1String("down")];
+    QJsonValueRef ulValue = jsonObj[QLatin1String("up")];
+    QJsonValueRef dlValue = jsonObj[QLatin1String("down")];
 
-    if (upValue.isUndefined() || downValue.isUndefined()) {
+    if (ulValue.isUndefined() || dlValue.isUndefined()) {
         return;
     }
 
-    QChart *chart = ui->chartView->chart();
-    QList<QAbstractSeries *> series = chart->series();
-    QLineSeries *upSeries = qobject_cast<QAreaSeries *>(series[0])->upperSeries();
-    QLineSeries *downSeries = qobject_cast<QAreaSeries *>(series[1])->upperSeries();
+    QCPGraph *ulGraph = ui->plot->graph(0);
+    QCPGraph *dlGraph = ui->plot->graph(1);
+    auto ulData = ulGraph->data();
+    auto dlData = dlGraph->data();
 
-    QVector<QPointF> upPoints = upSeries->pointsVector();
-    QVector<QPointF> downPoints = downSeries->pointsVector();
-    if (upPoints.size() > s_maxX) {
-        upPoints.pop_front();
-        downPoints.pop_front();
+    QVector<QCPGraphData> ulNewData, dlNewData;
+    ulNewData.reserve(ulData->size() + 1);
+    dlNewData.reserve(ulData->size() + 1);
+
+    for (int i = ulData->size() > s_maxX ? 1 : 0; i < ulData->size(); ++i) {
+        auto ulIter = ulData->at(i);
+        auto dlIter = dlData->at(i);
+        ulNewData.push_back(QCPGraphData(ulIter->key - 1, ulIter->value));
+        dlNewData.push_back(QCPGraphData(dlIter->key - 1, dlIter->value));
     }
 
-    double maxY = 1;
-    for (int i= 0; i < upPoints.size(); ++i) {
-        QPointF &upPt = upPoints[i];
-        QPointF &downPt = downPoints[i];
-        upPt.rx() -= 1;
-        downPt.rx() -= 1;
+    ulNewData.push_back(QCPGraphData(s_maxX, ulValue.toDouble()));
+    dlNewData.push_back(QCPGraphData(s_maxX, dlValue.toDouble()));
 
-        double tempY = std::max(upPt.y(), downPt.y());
-        if (tempY > maxY) {
-            maxY = tempY;
-        }
-    }
-
-    double upY = upValue.toDouble();
-    double downY = downValue.toDouble();
-    double tempY = std::max(upY, downY);
-    if (tempY > maxY) {
-        maxY = tempY;
-    }
-    chart->axisY()->setRange(0, maxY);
-    upPoints.push_back(QPointF(s_maxX, upY));
-    downPoints.push_back(QPointF(s_maxX, downY));
-
-    upSeries->replace(upPoints);
-    downSeries->replace(downPoints);
+    ulData->set(ulNewData, true);
+    dlData->set(dlNewData, true);
+    ui->plot->yAxis->rescale(true);
+    ui->plot->replot();
 }
 
 void TrafficPage::replyFinished()
