@@ -3,7 +3,6 @@
 
 #include <QMainWindow>
 #include <QMenu>
-#include <QNetworkAccessManager>
 #include <QProcess>
 #include <QSettings>
 #include <QSystemTrayIcon>
@@ -24,9 +23,6 @@ private:
     void fetchConfig(const QString &profile);
     QByteArray decryptConfig(const QByteArray &ba);
     void setTrayIcon(QIcon::Mode mode);
-
-    template<typename T>
-    void appendLog(T text);
 
     virtual void closeEvent(QCloseEvent *event) override;
     virtual bool event(QEvent *event) override;
@@ -54,6 +50,5 @@ private:
     QActionGroup m_actionGroup;
     QSystemTrayIcon m_trayIcon;
     QProcess m_clash;
-    QNetworkAccessManager m_netMgr;
 };
 #endif // MAINWINDOW_H

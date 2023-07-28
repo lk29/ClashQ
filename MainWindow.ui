@@ -16,21 +16,44 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout">
     <item>
-     <widget class="QPlainTextEdit" name="logEdit">
-      <property name="undoRedoEnabled">
-       <bool>false</bool>
+     <widget class="QTabWidget" name="tabWidget">
+      <property name="currentIndex">
+       <number>0</number>
       </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
-      <property name="maximumBlockCount">
-       <number>4096</number>
-      </property>
+      <widget class="TrafficPage" name="trafficPage">
+       <attribute name="title">
+        <string>Traffic</string>
+       </attribute>
+      </widget>
+      <widget class="QWidget" name="connPage">
+       <attribute name="title">
+        <string>Connections</string>
+       </attribute>
+      </widget>
+      <widget class="LogPage" name="logPage">
+       <attribute name="title">
+        <string>Logs</string>
+       </attribute>
+      </widget>
      </widget>
     </item>
    </layout>
   </widget>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>LogPage</class>
+   <extends>QWidget</extends>
+   <header>LogPage.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>TrafficPage</class>
+   <extends>QWidget</extends>
+   <header>TrafficPage.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

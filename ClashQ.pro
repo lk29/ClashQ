@@ -1,4 +1,4 @@
-QT       += core gui
+QT       += core gui charts
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets network
 
@@ -9,14 +9,22 @@ CONFIG += c++17
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    Application.cpp \
+    LogPage.cpp \
+    TrafficPage.cpp \
     main.cpp \
     MainWindow.cpp
 
 HEADERS += \
-    MainWindow.h
+    Application.h \
+    LogPage.h \
+    MainWindow.h \
+    TrafficPage.h
 
 FORMS += \
-    MainWindow.ui
+    LogPage.ui \
+    MainWindow.ui \
+    TrafficPage.ui
 
 INCLUDEPATH += D:\Downloads\openssl-1.0.2\inc32
 

@@ -1,5 +1,7 @@
+#include "Application.h"
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
+#include <QCloseEvent>
 #include <QDesktopServices>
 #include <QDir>
 #include <QNetworkReply>
@@ -14,7 +16,6 @@ MainWindow::MainWindow(QWidget *parent)
     , m_actionGroup(nullptr)
 {
     ui->setupUi(this);
-    ui->logEdit->setFont(QFont(QStringLiteral("Consolas"), 10));
 
     QStringList profiles = m_settings.value(QStringLiteral("profile")).toStringList();
     profiles.removeAll(QString());
@@ -58,7 +59,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(&m_clash, &QProcess::started, this, &MainWindow::clashStarted);
 
     if (profiles.isEmpty()) {
-        appendLog("no profile");
+        ui->logPage->appendHtmlLog("no profile");
     } else {
         auto actions = m_actionGroup.actions();
         int profIdx = m_settings.value(QStringLiteral("recent"), 0).toInt();
@@ -87,7 +88,7 @@ void MainWindow::fetchConfig(const QString &profile)
 
     QUrl url(m_settings.value(QStringLiteral("url")).toString());
     if (!url.isValid()) {
-        appendLog(url.errorString());
+        ui->logPage->appendHtmlLog(url.errorString());
         return;
     }
 
@@ -105,13 +106,13 @@ void MainWindow::fetchConfig(const QString &profile)
     request.setSslConfiguration(sslConfig);
     request.setHeader(QNetworkRequest::UserAgentHeader, "ClashQ");
 
-    QNetworkReply *reply = m_netMgr.get(request);
+    QNetworkReply *reply = Application::netMgmr().get(request);
     connect(reply, &QNetworkReply::finished, this, &MainWindow::replyFinished);
 
     QString logText("fetching configuration for profile \"");
     logText += profile;
     logText += '\"';
-    appendLog(logText);
+    ui->logPage->appendHtmlLog(logText);
 }
 
 QByteArray MainWindow::decryptConfig(const QByteArray &ba)
@@ -120,7 +121,7 @@ QByteArray MainWindow::decryptConfig(const QByteArray &ba)
 
     QString key = m_settings.value(QStringLiteral("key")).toString();
     if (key.isEmpty()) {
-        appendLog("key is empty");
+        ui->logPage->appendHtmlLog("key is empty");
         return result;
     }
 
@@ -141,7 +142,7 @@ QByteArray MainWindow::decryptConfig(const QByteArray &ba)
 
     if (!BIO_get_cipher_status(cipherBio)) {
         result.clear();
-        appendLog("failed to decrypt configuration");
+        ui->logPage->appendHtmlLog("failed to decrypt configuration");
     }
 
     BIO_free_all(cipherBio);
@@ -156,23 +157,6 @@ void MainWindow::setTrayIcon(QIcon::Mode mode)
     } else {
         m_trayIcon.setIcon(icon);
     }
-}
-
-template<typename T>
-void MainWindow::appendLog(T text)
-{
-    QDateTime now(QDateTime::currentDateTime());
-    // Make the formatted string have offset from UTC info.
-    // Qt's bug?
-    // https://bugreports.qt.io/browse/QTBUG-26161
-    now.setOffsetFromUtc(now.offsetFromUtc());
-
-    QString logText("<font color='#5c00e6'>");
-    logText += now.toString(Qt::ISODate);
-    logText += "</font>: ";
-    logText += text;
-
-    ui->logEdit->appendHtml(logText);
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -224,14 +208,14 @@ void MainWindow::replyFinished()
     reply->deleteLater();
 
     if (reply->error() != QNetworkReply::NoError) {
-        appendLog(reply->errorString());
+        ui->logPage->appendHtmlLog(reply->errorString());
         return;
     }
 
     QDir dir(m_clash.workingDirectory());
     QFile file(dir.absoluteFilePath(QStringLiteral("config.yaml")));
     if (!file.open(QIODevice::WriteOnly)) {
-        appendLog(file.errorString());
+        ui->logPage->appendHtmlLog(file.errorString());
         return;
     }
 
@@ -239,7 +223,7 @@ void MainWindow::replyFinished()
     if (ba.isEmpty()) {
         return;
     }
-    appendLog("decrypt configuration successfully");
+    ui->logPage->appendHtmlLog("decrypt configuration successfully");
 
     file.write(ba);
     file.close();
@@ -251,22 +235,22 @@ void MainWindow::clashErrorOccurred(QProcess::ProcessError error)
 {
     switch (error) {
     case QProcess::FailedToStart:
-        appendLog("failed to start clash subprocess");
+        ui->logPage->appendHtmlLog("failed to start clash subprocess");
         break;
     case QProcess::Crashed:
-        appendLog("clash subprocess crashed");
+        ui->logPage->appendHtmlLog("clash subprocess crashed");
         break;
     case QProcess::Timedout:
-        appendLog("wait for clash subprocess time out");
+        ui->logPage->appendHtmlLog("wait for clash subprocess time out");
         break;
     case QProcess::WriteError:
-        appendLog("failed to write to clash subprocess");
+        ui->logPage->appendHtmlLog("failed to write to clash subprocess");
         break;
     case QProcess::ReadError:
-        appendLog("failed to read from clash subprocess");
+        ui->logPage->appendHtmlLog("failed to read from clash subprocess");
         break;
     default:
-        appendLog("unknown error occurred in clash subprocess");
+        ui->logPage->appendHtmlLog("unknown error occurred in clash subprocess");
         break;
     }
 }
@@ -279,13 +263,13 @@ void MainWindow::clashFinished(int /*exitCode*/, QProcess::ExitStatus /*exitStat
 void MainWindow::clashStderrReady()
 {
     QProcess *subprocess = qobject_cast<QProcess *>(sender());
-    ui->logEdit->appendPlainText(subprocess->readAll().trimmed());
+    ui->logPage->appendTextLog(subprocess->readAll().trimmed());
 }
 
 void MainWindow::clashStdoutReady()
 {
     QProcess *subprocess = qobject_cast<QProcess *>(sender());
-    ui->logEdit->appendPlainText(subprocess->readAll().trimmed());
+    ui->logPage->appendTextLog(subprocess->readAll().trimmed());
 }
 
 void MainWindow::clashStarted()
