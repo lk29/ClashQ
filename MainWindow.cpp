@@ -203,7 +203,7 @@ bool MainWindow::event(QEvent *event)
 
         QSizeF newSize;
         QFontMetricsF fm = fontMetrics();
-        newSize.setWidth(fm.averageCharWidth() * 230);
+        newSize.setWidth(fm.averageCharWidth() * 250);
         newSize.setHeight(newSize.width() * 9 / 16);
 
         QSizeF oldSize = size();

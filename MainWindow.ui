@@ -20,6 +20,11 @@
       <property name="currentIndex">
        <number>0</number>
       </property>
+      <widget class="LogPage" name="logPage">
+       <attribute name="title">
+        <string>Logs</string>
+       </attribute>
+      </widget>
       <widget class="TrafficPage" name="trafficPage">
        <attribute name="title">
         <string>Traffic</string>
@@ -28,11 +33,6 @@
       <widget class="ConnectionPage" name="connPage">
        <attribute name="title">
         <string>Connections</string>
-       </attribute>
-      </widget>
-      <widget class="LogPage" name="logPage">
-       <attribute name="title">
-        <string>Logs</string>
        </attribute>
       </widget>
      </widget>
