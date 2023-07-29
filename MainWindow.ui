@@ -25,7 +25,7 @@
         <string>Traffic</string>
        </attribute>
       </widget>
-      <widget class="QWidget" name="connPage">
+      <widget class="ConnectionPage" name="connPage">
        <attribute name="title">
         <string>Connections</string>
        </attribute>
@@ -51,6 +51,12 @@
    <class>TrafficPage</class>
    <extends>QWidget</extends>
    <header>TrafficPage.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>ConnectionPage</class>
+   <extends>QWidget</extends>
+   <header>ConnectionPage.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

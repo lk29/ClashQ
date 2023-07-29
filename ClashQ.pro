@@ -10,6 +10,9 @@ CONFIG += c++17
 
 SOURCES += \
     Application.cpp \
+    ConnectionModel.cpp \
+    ConnectionPage.cpp \
+    ConnectionSortModel.cpp \
     LogPage.cpp \
     QCustomPlot/src/axis/axis.cpp \
     QCustomPlot/src/axis/axisticker.cpp \
@@ -61,11 +64,15 @@ SOURCES += \
     QCustomPlot/src/vector2d.cpp \
     TrafficPage.cpp \
     TrafficSpeedTicker.cpp \
+    Utils.cpp \
     main.cpp \
     MainWindow.cpp
 
 HEADERS += \
     Application.h \
+    ConnectionModel.h \
+    ConnectionPage.h \
+    ConnectionSortModel.h \
     LogPage.h \
     MainWindow.h \
     QCustomPlot/src/axis/axis.h \
@@ -121,9 +128,11 @@ HEADERS += \
     QCustomPlot/src/selectionrect.h \
     QCustomPlot/src/vector2d.h \
     TrafficPage.h \
-    TrafficSpeedTicker.h
+    TrafficSpeedTicker.h \
+    Utils.h
 
 FORMS += \
+    ConnectionPage.ui \
     LogPage.ui \
     MainWindow.ui \
     TrafficPage.ui
