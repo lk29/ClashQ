@@ -7,10 +7,12 @@
 #include <QNetworkReply>
 #include <QTimer>
 
-ConnectionModel::ConnectionModel(QObject *parent)
-    : QAbstractTableModel(parent)
+ConnectionModel::ConnectionModel(QObject *parent) :
+    QAbstractTableModel(parent),
+    m_keepSending(false)
 {
-    sendRequest();
+    connect(&Application::mainWindow(), &MainWindow::becomeVisible, this, &ConnectionModel::mainWndVisible);
+    connect(&Application::mainWindow(), &MainWindow::becomeHidden, this, &ConnectionModel::mainWndHidden);
 }
 
 QVariant ConnectionModel::headerData(int section, Qt::Orientation orientation, int role) const
@@ -125,12 +127,24 @@ QVariant ConnectionModel::data(const QModelIndex &index, int role) const
     return QVariant();
 }
 
+void ConnectionModel::sendRequest()
+{
+    QUrl url(Application::clashApiUrl());
+    url.setPath(QStringLiteral("/connections"));
+
+    QNetworkRequest request(url);
+    QNetworkReply *reply = Application::netMgmr().get(request);
+    connect(reply, &QNetworkReply::finished, this, &ConnectionModel::replyFinished);
+}
+
 void ConnectionModel::replyFinished()
 {
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
     reply->deleteLater();
 
-    QTimer::singleShot(1000, this, &ConnectionModel::sendRequest);
+    if (m_keepSending) {
+        QTimer::singleShot(1000, this, &ConnectionModel::sendRequest);
+    }
 
     QJsonDocument jsonDoc(QJsonDocument::fromJson(reply->readAll()));
     QJsonObject jsonObj(jsonDoc.object());
@@ -154,9 +168,12 @@ void ConnectionModel::replyFinished()
         info.download = connObj[QLatin1String("download")].toInt();
         info.chains = chainsStrs.join('/');
         info.rule = connObj[QLatin1String("rule")].toString();
-        info.rule += '(';
-        info.rule += connObj[QLatin1String("rulePayload")].toString();
-        info.rule += ')';
+        QString rulePayload(connObj[QLatin1String("rulePayload")].toString());
+        if (!rulePayload.isEmpty()) {
+            info.rule += '(';
+            info.rule += rulePayload;
+            info.rule += ')';
+        }
         info.start = QDateTime::fromString(connObj[QLatin1String("start")].toString(), Qt::ISODateWithMs);
         info.source = metaObj[QLatin1String("sourceIP")].toString();
         info.source += ':';
@@ -179,12 +196,13 @@ void ConnectionModel::replyFinished()
     endResetModel();
 }
 
-void ConnectionModel::sendRequest()
+void ConnectionModel::mainWndVisible()
 {
-    QUrl url(Application::clashApiUrl());
-    url.setPath(QStringLiteral("/connections"));
+    m_keepSending = true;
+    sendRequest();
+}
 
-    QNetworkRequest request(url);
-    QNetworkReply *reply = Application::netMgmr().get(request);
-    connect(reply, &QNetworkReply::finished, this, &ConnectionModel::replyFinished);
+void ConnectionModel::mainWndHidden()
+{
+    m_keepSending = false;
 }

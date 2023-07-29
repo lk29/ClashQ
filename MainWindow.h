@@ -19,11 +19,17 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+signals:
+    void becomeVisible();
+    void becomeHidden();
+
 private:
     void fetchConfig(const QString &profile);
     QByteArray decryptConfig(const QByteArray &ba);
     void setTrayIcon(QIcon::Mode mode);
 
+    virtual void showEvent(QShowEvent *event) override;
+    virtual void hideEvent(QHideEvent *event) override;
     virtual void closeEvent(QCloseEvent *event) override;
     virtual bool event(QEvent *event) override;
 
@@ -45,6 +51,7 @@ private:
     Ui::MainWindow *ui;
     char m_iv[9];
     bool m_sizeAdjusted;
+    bool m_hidden;
     QSettings m_settings;
     QMenu m_trayIconMenu;
     QActionGroup m_actionGroup;

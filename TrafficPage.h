@@ -15,14 +15,18 @@ public:
     explicit TrafficPage(QWidget *parent = nullptr);
     ~TrafficPage();
 
+private:
+    void sendRequest();
+
 private slots:
     void replyReadyRead();
     void replyFinished();
-
-    void sendRequest();
+    void mainWndVisible();
+    void mainWndHidden();
 
 private:
     Ui::TrafficPage *ui;
+    bool m_keepReceiving;
 
     static const double s_maxX;
 };

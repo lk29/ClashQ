@@ -8,12 +8,13 @@
 #include <openssl/bio.h>
 #include <openssl/evp.h>
 
-MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent)
-    , ui(new Ui::MainWindow)
-    , m_sizeAdjusted(false)
-    , m_settings(iniFilePath(), QSettings::IniFormat)
-    , m_actionGroup(nullptr)
+MainWindow::MainWindow(QWidget *parent) :
+    QMainWindow(parent),
+    ui(new Ui::MainWindow),
+    m_sizeAdjusted(false),
+    m_hidden(true),
+    m_settings(iniFilePath(), QSettings::IniFormat),
+    m_actionGroup(nullptr)
 {
     ui->setupUi(this);
 
@@ -157,6 +158,24 @@ void MainWindow::setTrayIcon(QIcon::Mode mode)
     } else {
         m_trayIcon.setIcon(icon);
     }
+}
+
+void MainWindow::showEvent(QShowEvent *event)
+{
+    if (m_hidden) {
+        m_hidden = false;
+        emit becomeVisible();
+    }
+    QMainWindow::showEvent(event);
+}
+
+void MainWindow::hideEvent(QHideEvent *event)
+{
+    if (!isMinimized()) {
+        m_hidden = true;
+        emit becomeHidden();
+    }
+    QMainWindow::hideEvent(event);
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)

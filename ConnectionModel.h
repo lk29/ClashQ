@@ -30,10 +30,13 @@ public:
     virtual int columnCount(const QModelIndex &parent = QModelIndex()) const override;
     virtual QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
 
+private:
+    void sendRequest();
+
 private slots:
     void replyFinished();
-
-    void sendRequest();
+    void mainWndVisible();
+    void mainWndHidden();
 
 private:
     struct ConnInfo {
@@ -49,6 +52,7 @@ private:
         QString type;
     };
 
+    bool m_keepSending;
     QVector<ConnInfo> m_connInfos;
 };
 

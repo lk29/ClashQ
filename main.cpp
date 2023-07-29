@@ -1,10 +1,8 @@
 #include "Application.h"
-#include "MainWindow.h"
 
 int main(int argc, char *argv[])
 {
     Application a(argc, argv);
-    MainWindow w;
-    w.show();
+    Application::mainWindow().show();
     return a.exec();
 }

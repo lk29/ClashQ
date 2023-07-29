@@ -10,7 +10,8 @@ const double TrafficPage::s_maxX = 180;
 
 TrafficPage::TrafficPage(QWidget *parent) :
     QWidget(parent),
-    ui(new Ui::TrafficPage)
+    ui(new Ui::TrafficPage),
+    m_keepReceiving(false)
 {
     ui->setupUi(this);
     ui->plot->xAxis->setRange(0, s_maxX);
@@ -32,7 +33,8 @@ TrafficPage::TrafficPage(QWidget *parent) :
     dlGraph->setPen(QPen(Qt::red));
     dlGraph->setBrush(dlBrush);
 
-    sendRequest();
+    connect(&Application::mainWindow(), &MainWindow::becomeVisible, this, &TrafficPage::mainWndVisible);
+    connect(&Application::mainWindow(), &MainWindow::becomeHidden, this, &TrafficPage::mainWndHidden);
 }
 
 TrafficPage::~TrafficPage()
@@ -40,9 +42,24 @@ TrafficPage::~TrafficPage()
     delete ui;
 }
 
+void TrafficPage::sendRequest()
+{
+    QUrl url(Application::clashApiUrl());
+    url.setPath(QStringLiteral("/traffic"));
+
+    QNetworkRequest request(url);
+    QNetworkReply *reply = Application::netMgmr().get(request);
+    connect(reply, &QNetworkReply::readyRead, this, &TrafficPage::replyReadyRead);
+    connect(reply, &QNetworkReply::finished, this, &TrafficPage::replyFinished);
+}
+
 void TrafficPage::replyReadyRead()
 {
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    if (!m_keepReceiving) {
+        reply->close();
+        return;
+    }
 
     QJsonDocument jsonDoc(QJsonDocument::fromJson(reply->readAll()));
     QJsonObject jsonObj(jsonDoc.object());
@@ -83,16 +100,25 @@ void TrafficPage::replyFinished()
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
     reply->deleteLater();
 
-    QTimer::singleShot(3000, this, &TrafficPage::sendRequest);
+    if (m_keepReceiving) {
+        QTimer::singleShot(3000, this, &TrafficPage::sendRequest);
+    }
 }
 
-void TrafficPage::sendRequest()
+void TrafficPage::mainWndVisible()
 {
-    QUrl url(Application::clashApiUrl());
-    url.setPath(QStringLiteral("/traffic"));
-
-    QNetworkRequest request(url);
-    QNetworkReply *reply = Application::netMgmr().get(request);
-    connect(reply, &QNetworkReply::readyRead, this, &TrafficPage::replyReadyRead);
-    connect(reply, &QNetworkReply::finished, this, &TrafficPage::replyFinished);
+    m_keepReceiving = true;
+    sendRequest();
 }
+
+void TrafficPage::mainWndHidden()
+{
+    m_keepReceiving = false;
+
+    QCPGraph *ulGraph = ui->plot->graph(0);
+    QCPGraph *dlGraph = ui->plot->graph(1);
+    ulGraph->data()->clear();
+    dlGraph->data()->clear();
+    ui->plot->replot();
+}
+
