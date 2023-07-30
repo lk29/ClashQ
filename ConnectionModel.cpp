@@ -17,34 +17,38 @@ ConnectionModel::ConnectionModel(QObject *parent) :
 
 QVariant ConnectionModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
-    if (orientation != Qt::Horizontal || role != Qt::DisplayRole) {
-        return QVariant();
+    if (role == Qt::InitialSortOrderRole) {
+        return Qt::DescendingOrder;
     }
 
-    switch (section) {
-    case HeaderHost:
-        return "Host";
-    case HeaderUpload:
-        return "Upload";
-    case HeaderDownload:
-        return "Download";
-    case HeaderChains:
-        return "Chains";
-    case HeaderRule:
-        return "Rule";
-    case HeaderTime:
-        return "Time";
-    case HeaderSource:
-        return "Source";
-    case HeaderDestIp:
-        return "Destination IP";
-    case HeaderType:
-        return "Type";
-    case HeaderProcess:
-        return "Process";
-    default:
-        return QVariant();
+    if (role == Qt::DisplayRole) {
+        switch (section) {
+        case HeaderHost:
+            return "Host";
+        case HeaderUpload:
+            return "Upload";
+        case HeaderDownload:
+            return "Download";
+        case HeaderChains:
+            return "Chains";
+        case HeaderRule:
+            return "Rule";
+        case HeaderTime:
+            return "Time";
+        case HeaderSource:
+            return "Source";
+        case HeaderDestIp:
+            return "Destination IP";
+        case HeaderType:
+            return "Type";
+        case HeaderProcess:
+            return "Process";
+        default:
+            return QVariant();
+        }
     }
+
+    return QVariant();
 }
 
 int ConnectionModel::rowCount(const QModelIndex &parent) const
