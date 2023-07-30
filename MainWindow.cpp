@@ -5,6 +5,7 @@
 #include <QDesktopServices>
 #include <QDir>
 #include <QNetworkReply>
+#include <QTimer>
 #include <openssl/bio.h>
 #include <openssl/evp.h>
 
@@ -182,7 +183,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
 {
     if (event->spontaneous()) {
         event->ignore();
-        hide();
+        showMinimized();
     } else {
         event->accept();
 
@@ -198,19 +199,30 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
 bool MainWindow::event(QEvent *event)
 {
-    if (event->type() == QEvent::ShowToParent && !m_sizeAdjusted) {
-        m_sizeAdjusted = true;
+    switch (event->type()) {
+    case QEvent::WindowStateChange:
+        if (isMinimized() && !event->spontaneous()) {
+            QTimer::singleShot(150, this, &MainWindow::hide);
+        }
+        break;
+    case QEvent::ShowToParent:
+        if (!m_sizeAdjusted) {
+            m_sizeAdjusted = true;
 
-        QSizeF newSize;
-        QFontMetricsF fm = fontMetrics();
-        newSize.setWidth(fm.averageCharWidth() * 250);
-        newSize.setHeight(newSize.width() * 9 / 16);
+            QSizeF newSize;
+            QFontMetricsF fm = fontMetrics();
+            newSize.setWidth(fm.averageCharWidth() * 250);
+            newSize.setHeight(newSize.width() * 9 / 16);
 
-        QSizeF oldSize = size();
-        int dx = qRound((newSize.width() - oldSize.width())/2.0);
-        int dy = qRound((newSize.height() - oldSize.height())/2.0);
+            QSizeF oldSize = size();
+            int dx = qRound((newSize.width() - oldSize.width())/2.0);
+            int dy = qRound((newSize.height() - oldSize.height())/2.0);
 
-        setGeometry(geometry().adjusted(-dx, -dy, dx, dy));
+            setGeometry(geometry().adjusted(-dx, -dy, dx, dy));
+        }
+        break;
+    default:
+        break;
     }
     return QMainWindow::event(event);
 }
@@ -300,7 +312,11 @@ void MainWindow::trayIconActivated(QSystemTrayIcon::ActivationReason reason)
 {
     if (reason == QSystemTrayIcon::Trigger) {
         if (isVisible()) {
-            hide();
+            if (isMinimized()) {
+                showNormal();
+            } else {
+                hide();
+            }
         } else {
             showNormal();
             activateWindow();
