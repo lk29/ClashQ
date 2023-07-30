@@ -97,9 +97,8 @@ QVariant ConnectionModel::data(const QModelIndex &index, int role) const
             return info.chains;
         case HeaderRule:
             return info.rule;
-        case HeaderTime: {
+        case HeaderTime:
             return prettyDuration(info.start.secsTo(QDateTime::currentDateTime()));
-        }
         case HeaderSource:
             return info.source;
         case HeaderDestIp:
@@ -142,9 +141,11 @@ void ConnectionModel::replyFinished()
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
     reply->deleteLater();
 
-    if (m_keepSending) {
-        QTimer::singleShot(1000, this, &ConnectionModel::sendRequest);
+    if (!m_keepSending) {
+        return;
     }
+
+    QTimer::singleShot(1000, this, &ConnectionModel::sendRequest);
 
     QJsonDocument jsonDoc(QJsonDocument::fromJson(reply->readAll()));
     QJsonObject jsonObj(jsonDoc.object());

@@ -30,10 +30,8 @@ public:
     virtual int columnCount(const QModelIndex &parent = QModelIndex()) const override;
     virtual QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
 
-private:
-    void sendRequest();
-
 private slots:
+    void sendRequest();
     void replyFinished();
     void mainWndVisible();
     void mainWndHidden();

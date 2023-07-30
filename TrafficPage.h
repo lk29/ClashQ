@@ -15,10 +15,8 @@ public:
     explicit TrafficPage(QWidget *parent = nullptr);
     ~TrafficPage();
 
-private:
-    void sendRequest();
-
 private slots:
+    void sendRequest();
     void replyReadyRead();
     void replyFinished();
     void mainWndVisible();
