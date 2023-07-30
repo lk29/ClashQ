@@ -6,6 +6,7 @@
 #include <QDir>
 #include <QNetworkReply>
 #include <QTimer>
+#include <Windows.h>
 #include <openssl/bio.h>
 #include <openssl/evp.h>
 
@@ -14,10 +15,13 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow),
     m_sizeAdjusted(false),
     m_hidden(true),
+    m_sysShutdown(false),
     m_settings(iniFilePath(), QSettings::IniFormat),
     m_actionGroup(nullptr)
 {
     ui->setupUi(this);
+
+    Application::instance()->installNativeEventFilter(this);
 
     QStringList profiles = m_settings.value(QStringLiteral("profile")).toStringList();
     profiles.removeAll(QString());
@@ -79,6 +83,14 @@ MainWindow::~MainWindow()
         m_clash.close();
     }
     delete ui;
+}
+
+bool MainWindow::nativeEventFilter(const QByteArray &eventType, void *message, long *result)
+{
+    if (static_cast<MSG *>(message)->message == WM_QUERYENDSESSION) {
+        m_sysShutdown = true;
+    }
+    return false;
 }
 
 void MainWindow::fetchConfig(const QString &profile)
@@ -181,7 +193,7 @@ void MainWindow::hideEvent(QHideEvent *event)
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    if (event->spontaneous()) {
+    if (event->spontaneous() && !m_sysShutdown) {
         event->ignore();
         showMinimized();
     } else {

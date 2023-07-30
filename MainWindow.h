@@ -1,6 +1,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include <QAbstractNativeEventFilter>
 #include <QMainWindow>
 #include <QMenu>
 #include <QProcess>
@@ -11,13 +12,15 @@ QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
 
-class MainWindow : public QMainWindow
+class MainWindow : public QMainWindow, public QAbstractNativeEventFilter
 {
     Q_OBJECT
 
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+
+    virtual bool nativeEventFilter(const QByteArray &eventType, void *message, long *result) override;
 
 signals:
     void becomeVisible();
@@ -52,6 +55,7 @@ private:
     char m_iv[9];
     bool m_sizeAdjusted;
     bool m_hidden;
+    bool m_sysShutdown;
     QSettings m_settings;
     QMenu m_trayIconMenu;
     QActionGroup m_actionGroup;
