@@ -16,6 +16,9 @@
   <layout class="QHBoxLayout" name="horizontalLayout">
    <item>
     <widget class="QPlainTextEdit" name="logEdit">
+     <property name="focusPolicy">
+      <enum>Qt::ClickFocus</enum>
+     </property>
      <property name="readOnly">
       <bool>true</bool>
      </property>

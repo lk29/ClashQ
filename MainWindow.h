@@ -31,6 +31,7 @@ private:
     QByteArray decryptConfig(const QByteArray &ba);
     void setTrayIcon(QIcon::Mode mode);
 
+    virtual void keyPressEvent(QKeyEvent *event) override;
     virtual void showEvent(QShowEvent *event) override;
     virtual void hideEvent(QHideEvent *event) override;
     virtual void closeEvent(QCloseEvent *event) override;

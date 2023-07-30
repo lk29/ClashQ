@@ -85,7 +85,7 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-bool MainWindow::nativeEventFilter(const QByteArray &eventType, void *message, long *result)
+bool MainWindow::nativeEventFilter(const QByteArray & /*eventType*/, void *message, long * /*result*/)
 {
     if (static_cast<MSG *>(message)->message == WM_QUERYENDSESSION) {
         m_sysShutdown = true;
@@ -171,6 +171,19 @@ void MainWindow::setTrayIcon(QIcon::Mode mode)
     } else {
         m_trayIcon.setIcon(icon);
     }
+}
+
+void MainWindow::keyPressEvent(QKeyEvent *event)
+{
+    if (event->key() == Qt::Key_Tab) {
+        int index = ui->tabWidget->currentIndex();
+        if (++index >= ui->tabWidget->count()) {
+            index = 0;
+        }
+        ui->tabWidget->setCurrentIndex(index);
+        return;
+    }
+    QMainWindow::keyPressEvent(event);
 }
 
 void MainWindow::showEvent(QShowEvent *event)

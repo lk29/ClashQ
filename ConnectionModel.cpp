@@ -17,6 +17,10 @@ ConnectionModel::ConnectionModel(QObject *parent) :
 
 QVariant ConnectionModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
+    if (orientation != Qt::Horizontal) {
+        return QVariant();
+    }
+
     if (role == Qt::InitialSortOrderRole) {
         return Qt::DescendingOrder;
     }
