@@ -197,7 +197,7 @@ void MainWindow::showEvent(QShowEvent *event)
 
 void MainWindow::hideEvent(QHideEvent *event)
 {
-    if (!isMinimized()) {
+    if (!event->spontaneous() && !isVisible()) {
         m_hidden = true;
         emit becomeHidden();
     }
