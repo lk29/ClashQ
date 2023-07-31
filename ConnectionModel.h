@@ -41,6 +41,7 @@ private:
         int upload;
         int download;
         QDateTime start;
+        QString id;
         QString host;
         QString chains;
         QString rule;

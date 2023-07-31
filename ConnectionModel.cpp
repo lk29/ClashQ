@@ -163,19 +163,23 @@ void ConnectionModel::replyFinished()
 
     Application::mainWindow().updateConnStats(ulTotal, dlTotal, conns.count());
 
-    beginResetModel();
-    m_connInfos.clear();
+    QVector<int> indexes;
+    indexes.reserve(m_connInfos.size());
+    for (int i = 0; i < m_connInfos.size(); ++i) {
+        indexes.append(i);
+    }
+
     for (int i = 0; i < conns.count(); ++i) {
         QJsonObject connObj = conns[i].toObject();
         QJsonObject metaObj = connObj[QLatin1String("metadata")].toObject();
         QJsonArray chains = connObj[QLatin1String("chains")].toArray();
-
         QStringList chainsStrs;
         for (int i = chains.count() - 1; i >= 0; --i) {
             chainsStrs.append(chains[i].toString());
         }
 
         ConnInfo info;
+        info.id = connObj[QLatin1String("id")].toString();
         info.host = metaObj[QLatin1String("host")].toString();
         info.upload = connObj[QLatin1String("upload")].toInt();
         info.download = connObj[QLatin1String("download")].toInt();
@@ -204,9 +208,29 @@ void ConnectionModel::replyFinished()
         info.host += ':';
         info.host += metaObj[QLatin1String("destinationPort")].toString();
 
-        m_connInfos.append(std::move(info));
+        int idx = -1;
+        for (int i = 0; i < indexes.size(); ++i) {
+            if (m_connInfos[indexes[i]].id == info.id) {
+                idx = indexes.takeAt(i);
+                break;
+            }
+        }
+        if (idx < 0) {
+            beginInsertRows(QModelIndex(), m_connInfos.size(), m_connInfos.size());
+            m_connInfos.append(std::move(info));
+            endInsertRows();
+        } else {
+            m_connInfos[idx] = info;
+            emit dataChanged(index(idx, 0), index(idx, HeaderCount - 1));
+        }
     }
-    endResetModel();
+
+    for (int i = 0; i < indexes.size(); ++i) {
+        int idx = indexes[i] - i;
+        beginRemoveRows(QModelIndex(), idx, idx);
+        m_connInfos.remove(idx);
+        endRemoveRows();
+    }
 }
 
 void ConnectionModel::mainWndVisible()
