@@ -21,14 +21,14 @@ TrafficPage::TrafficPage(QWidget *parent) :
 
     QCPGraph *ulGraph = ui->plot->addGraph();
     QColor ulFillColor(Qt::blue);
-    ulFillColor.setAlpha(100);
+    ulFillColor.setAlpha(60);
     QBrush ulBrush(ulFillColor);
     ulGraph->setPen(QPen(Qt::blue));
     ulGraph->setBrush(ulBrush);
 
     QCPGraph *dlGraph = ui->plot->addGraph();
     QColor dlFillColor(Qt::red);
-    dlFillColor.setAlpha(100);
+    dlFillColor.setAlpha(60);
     QBrush dlBrush(dlFillColor);
     dlGraph->setPen(QPen(Qt::red));
     dlGraph->setBrush(dlBrush);

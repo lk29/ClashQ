@@ -14,7 +14,11 @@ QString prettyBytes(double bytes)
         return QString::asprintf("%.1f MB", bytes);
     }
     bytes /= 1024;
-    return QString::asprintf("%.1f GB", bytes);
+    if (std::abs(bytes) < 1024) {
+        return QString::asprintf("%.1f GB", bytes);
+    }
+    bytes /= 1024;
+    return QString::asprintf("%.1f TB", bytes);
 }
 
 QString prettyDuration(double sec)

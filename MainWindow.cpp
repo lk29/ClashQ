@@ -23,7 +23,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     ui->statusBar->addPermanentWidget(&m_trafficStats);
     ui->statusBar->addPermanentWidget(&m_connStats);
-    ui->statusBar->setStyleSheet(QStringLiteral("QLabel { padding-left: 4px; padding-right: 4px; }"));
+    ui->statusBar->setStyleSheet(QStringLiteral("QLabel { padding-left: 10px; padding-right: 10px; }"));
 
     Application::instance()->installNativeEventFilter(this);
 
