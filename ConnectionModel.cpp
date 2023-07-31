@@ -158,6 +158,10 @@ void ConnectionModel::replyFinished()
     QJsonDocument jsonDoc(QJsonDocument::fromJson(reply->readAll()));
     QJsonObject jsonObj(jsonDoc.object());
     QJsonArray conns = jsonObj[QLatin1String("connections")].toArray();
+    double ulTotal = jsonObj[QLatin1String("uploadTotal")].toDouble();
+    double dlTotal = jsonObj[QLatin1String("downloadTotal")].toDouble();
+
+    Application::mainWindow().updateConnStats(ulTotal, dlTotal, conns.count());
 
     beginResetModel();
     m_connInfos.clear();

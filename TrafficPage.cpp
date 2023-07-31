@@ -65,10 +65,13 @@ void TrafficPage::replyReadyRead()
     QJsonObject jsonObj(jsonDoc.object());
     QJsonValueRef ulValue = jsonObj[QLatin1String("up")];
     QJsonValueRef dlValue = jsonObj[QLatin1String("down")];
-
     if (ulValue.isUndefined() || dlValue.isUndefined()) {
         return;
     }
+
+    double ulBytes = ulValue.toDouble();
+    double dlBytes = dlValue.toDouble();
+    Application::mainWindow().updateTrafficStats(ulBytes, dlBytes);
 
     QCPGraph *ulGraph = ui->plot->graph(0);
     QCPGraph *dlGraph = ui->plot->graph(1);
@@ -86,8 +89,8 @@ void TrafficPage::replyReadyRead()
         dlNewData.push_back(QCPGraphData(dlIter->key - 1, dlIter->value));
     }
 
-    ulNewData.push_back(QCPGraphData(s_maxX, ulValue.toDouble()));
-    dlNewData.push_back(QCPGraphData(s_maxX, dlValue.toDouble()));
+    ulNewData.push_back(QCPGraphData(s_maxX, ulBytes));
+    dlNewData.push_back(QCPGraphData(s_maxX, dlBytes));
 
     ulData->set(ulNewData, true);
     dlData->set(dlNewData, true);

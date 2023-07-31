@@ -1,6 +1,7 @@
 #include "Application.h"
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
+#include "Utils.h"
 #include <QCloseEvent>
 #include <QDesktopServices>
 #include <QDir>
@@ -20,6 +21,9 @@ MainWindow::MainWindow(QWidget *parent) :
     m_actionGroup(nullptr)
 {
     ui->setupUi(this);
+    ui->statusBar->addPermanentWidget(&m_trafficStats);
+    ui->statusBar->addPermanentWidget(&m_connStats);
+    ui->statusBar->setStyleSheet(QStringLiteral("QLabel { padding-left: 4px; padding-right: 4px; }"));
 
     Application::instance()->installNativeEventFilter(this);
 
@@ -83,6 +87,28 @@ MainWindow::~MainWindow()
         m_clash.close();
     }
     delete ui;
+}
+
+void MainWindow::updateTrafficStats(double ulTraffic, double dlTraffic)
+{
+    QString text("UL: ");
+    text += prettyBytes(ulTraffic);
+    text += "    DL: ";
+    text += prettyBytes(dlTraffic);
+
+    m_trafficStats.setText(text);
+}
+
+void MainWindow::updateConnStats(double ulTotal, double dlTotal, int numOfConns)
+{
+    QString text("UL Total: ");
+    text += prettyBytes(ulTotal);
+    text += "    DL Total: ";
+    text += prettyBytes(dlTotal);
+    text += "    Conn: ";
+    text += QString::number(numOfConns);
+
+    m_connStats.setText(text);
 }
 
 bool MainWindow::nativeEventFilter(const QByteArray & /*eventType*/, void *message, long * /*result*/)

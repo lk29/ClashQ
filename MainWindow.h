@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QAbstractNativeEventFilter>
+#include <QLabel>
 #include <QMainWindow>
 #include <QMenu>
 #include <QProcess>
@@ -19,6 +20,9 @@ class MainWindow : public QMainWindow, public QAbstractNativeEventFilter
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+
+    void updateTrafficStats(double ulTraffic, double dlTraffic);
+    void updateConnStats(double ulTotal, double dlTotal, int numOfConns);
 
     virtual bool nativeEventFilter(const QByteArray &eventType, void *message, long *result) override;
 
@@ -61,6 +65,8 @@ private:
     QMenu m_trayIconMenu;
     QActionGroup m_actionGroup;
     QSystemTrayIcon m_trayIcon;
+    QLabel m_trafficStats;
+    QLabel m_connStats;
     QProcess m_clash;
 };
 #endif // MAINWINDOW_H
