@@ -44,7 +44,8 @@ private:
     static QString iniFilePath();
 
 private slots:
-    void replyFinished();
+    void fetchCfgReplyFinished();
+    void getVerReplyFinished();
     void clashErrorOccurred(QProcess::ProcessError error);
     void clashFinished(int exitCode, QProcess::ExitStatus exitStatus);
     void clashStderrReady();

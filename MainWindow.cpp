@@ -5,6 +5,8 @@
 #include <QCloseEvent>
 #include <QDesktopServices>
 #include <QDir>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QNetworkReply>
 #include <QTimer>
 #include <Windows.h>
@@ -121,9 +123,8 @@ bool MainWindow::nativeEventFilter(const QByteArray & /*eventType*/, void *messa
 
 void MainWindow::fetchConfig(const QString &profile)
 {
-    QString tooltip("Profile \"");
+    QString tooltip("Profile: ");
     tooltip += profile;
-    tooltip += '\"';
     m_trayIcon.setToolTip(tooltip);
 
     QUrl url(m_settings.value(QStringLiteral("url")).toString());
@@ -147,7 +148,7 @@ void MainWindow::fetchConfig(const QString &profile)
     request.setHeader(QNetworkRequest::UserAgentHeader, "ClashQ");
 
     QNetworkReply *reply = Application::netMgmr().get(request);
-    connect(reply, &QNetworkReply::finished, this, &MainWindow::replyFinished);
+    connect(reply, &QNetworkReply::finished, this, &MainWindow::fetchCfgReplyFinished);
 
     QString logText("fetching configuration for profile \"");
     logText += profile;
@@ -284,7 +285,7 @@ QString MainWindow::iniFilePath()
     return dir.absoluteFilePath(QStringLiteral("config.ini"));
 }
 
-void MainWindow::replyFinished()
+void MainWindow::fetchCfgReplyFinished()
 {
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
     reply->deleteLater();
@@ -311,6 +312,27 @@ void MainWindow::replyFinished()
     file.close();
 
     m_clash.start(QIODevice::ReadOnly);
+}
+
+void MainWindow::getVerReplyFinished()
+{
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    reply->deleteLater();
+
+    if (reply->error() != QNetworkReply::NoError) {
+        return;
+    }
+
+    QJsonDocument jsonDoc = QJsonDocument::fromJson(reply->readAll());
+    QJsonObject jsonObj = jsonDoc.object();
+    QJsonValue jsonVer = jsonObj[QLatin1String("version")];
+    if (jsonVer.isString()) {
+        QString tooltip = m_trayIcon.toolTip();
+        tooltip += "\nClash: ";
+        tooltip += jsonVer.toString();
+
+        m_trayIcon.setToolTip(tooltip);
+    }
 }
 
 void MainWindow::clashErrorOccurred(QProcess::ProcessError error)
@@ -357,6 +379,13 @@ void MainWindow::clashStdoutReady()
 void MainWindow::clashStarted()
 {
     setTrayIcon(QIcon::Normal);
+
+    QUrl url(Application::clashApiUrl());
+    url.setPath(QStringLiteral("/version"));
+
+    QNetworkRequest request(url);
+    QNetworkReply *reply = Application::netMgmr().get(request);
+    connect(reply, &QNetworkReply::finished, this, &MainWindow::getVerReplyFinished);
 }
 
 void MainWindow::trayIconActivated(QSystemTrayIcon::ActivationReason reason)
