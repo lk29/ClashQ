@@ -24,7 +24,7 @@ private slots:
 
 private:
     Ui::TrafficPage *ui;
-    bool m_keepReceiving;
+    bool m_mainWndVisible;
 
     static const double s_maxX;
 };

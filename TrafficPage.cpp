@@ -11,7 +11,7 @@ const double TrafficPage::s_maxX = 180;
 TrafficPage::TrafficPage(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::TrafficPage),
-    m_keepReceiving(false)
+    m_mainWndVisible(false)
 {
     ui->setupUi(this);
     ui->plot->xAxis->setRange(0, s_maxX);
@@ -56,7 +56,7 @@ void TrafficPage::sendRequest()
 void TrafficPage::replyReadyRead()
 {
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
-    if (!m_keepReceiving) {
+    if (!m_mainWndVisible) {
         reply->close();
         return;
     }
@@ -103,20 +103,20 @@ void TrafficPage::replyFinished()
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
     reply->deleteLater();
 
-    if (m_keepReceiving) {
+    if (m_mainWndVisible) {
         QTimer::singleShot(3000, this, &TrafficPage::sendRequest);
     }
 }
 
 void TrafficPage::mainWndVisible()
 {
-    m_keepReceiving = true;
+    m_mainWndVisible = true;
     sendRequest();
 }
 
 void TrafficPage::mainWndHidden()
 {
-    m_keepReceiving = false;
+    m_mainWndVisible = false;
 
     QCPGraph *ulGraph = ui->plot->graph(0);
     QCPGraph *dlGraph = ui->plot->graph(1);

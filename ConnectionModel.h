@@ -51,7 +51,7 @@ private:
         QString type;
     };
 
-    bool m_keepSending;
+    bool m_mainWndVisible;
     QVector<ConnInfo> m_connInfos;
 };
 

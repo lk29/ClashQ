@@ -9,7 +9,7 @@
 
 ConnectionModel::ConnectionModel(QObject *parent) :
     QAbstractTableModel(parent),
-    m_keepSending(false)
+    m_mainWndVisible(false)
 {
     connect(&Application::mainWindow(), &MainWindow::becomeVisible, this, &ConnectionModel::mainWndVisible);
     connect(&Application::mainWindow(), &MainWindow::becomeHidden, this, &ConnectionModel::mainWndHidden);
@@ -22,7 +22,14 @@ QVariant ConnectionModel::headerData(int section, Qt::Orientation orientation, i
     }
 
     if (role == Qt::InitialSortOrderRole) {
-        return Qt::DescendingOrder;
+        switch (section) {
+        case HeaderUpload:
+        case HeaderDownload:
+        case HeaderTime:
+            return Qt::DescendingOrder;
+        default:
+            return Qt::AscendingOrder;
+        }
     }
 
     if (role == Qt::DisplayRole) {
@@ -149,7 +156,7 @@ void ConnectionModel::replyFinished()
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
     reply->deleteLater();
 
-    if (!m_keepSending) {
+    if (!m_mainWndVisible) {
         return;
     }
 
@@ -235,11 +242,11 @@ void ConnectionModel::replyFinished()
 
 void ConnectionModel::mainWndVisible()
 {
-    m_keepSending = true;
+    m_mainWndVisible = true;
     sendRequest();
 }
 
 void ConnectionModel::mainWndHidden()
 {
-    m_keepSending = false;
+    m_mainWndVisible = false;
 }
