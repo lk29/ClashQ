@@ -9,13 +9,15 @@ ConnectionSortModel::ConnectionSortModel(QObject *parent)
 
 bool ConnectionSortModel::lessThan(const QModelIndex &left, const QModelIndex &right) const
 {
-    if (left.column() == ConnectionModel::HeaderUpload ||
-        left.column() == ConnectionModel::HeaderDownload ||
-        left.column() == ConnectionModel::HeaderTime)
-    {
+    switch (left.column()) {
+    case ConnectionModel::HeaderUpload:
+    case ConnectionModel::HeaderDownload:
+    case ConnectionModel::HeaderTime: {
         QVariant leftData(sourceModel()->data(left, Qt::UserRole));
         QVariant rightData(sourceModel()->data(right, Qt::UserRole));
         return leftData < rightData;
     }
-    return QSortFilterProxyModel::lessThan(left, right);
+    default:
+        return QSortFilterProxyModel::lessThan(left, right);
+    }
 }

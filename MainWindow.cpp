@@ -242,7 +242,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
         for (int i = 0; i < actions.size(); ++i) {
             if (actions.at(i)->isChecked()) {
                 m_settings.setValue(QStringLiteral("recent"), i);
-                return;
+                break;
             }
         }
     }

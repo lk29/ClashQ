@@ -3,7 +3,7 @@
 QString prettyBytes(double bytes)
 {
     if (std::abs(bytes) < 1024) {
-        return QString::asprintf("%.1f B", bytes);
+        return QString::asprintf("%.0f B", bytes);
     }
     bytes /= 1024;
     if (std::abs(bytes) < 1024) {
@@ -24,10 +24,10 @@ QString prettyBytes(double bytes)
 QString prettyDuration(double sec)
 {
     if (std::abs(sec) < 2) {
-        return QString::asprintf("%.1f second", sec);
+        return QString::asprintf("%.0f second", sec);
     }
     if (std::abs(sec) < 60) {
-        return QString::asprintf("%.1f seconds", sec);
+        return QString::asprintf("%.0f seconds", sec);
     }
     sec /= 60;
     if (std::abs(sec) < 2) {
