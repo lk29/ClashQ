@@ -63,15 +63,16 @@ MainWindow::MainWindow(QWidget *parent) :
     m_clash.setWorkingDirectory(dir.absolutePath());
     m_clash.setArguments(QStringList() << "-d" << "." << "-f" << "config.yaml");
     m_clash.setProgram(dir.absoluteFilePath("clash-windows-amd64-v3.exe"));
+    m_clash.closeReadChannel(QProcess::StandardError);
+    m_clash.closeWriteChannel();
 
     connect(&m_clash, &QProcess::errorOccurred, this, &MainWindow::clashErrorOccurred);
     connect(&m_clash, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this, &MainWindow::clashFinished);
-    connect(&m_clash, &QProcess::readyReadStandardError, this, &MainWindow::clashStderrReady);
     connect(&m_clash, &QProcess::readyReadStandardOutput, this, &MainWindow::clashStdoutReady);
     connect(&m_clash, &QProcess::started, this, &MainWindow::clashStarted);
 
     if (profiles.isEmpty()) {
-        ui->logPage->appendHtmlLog("no profile");
+        ui->logPage->appendLog("no profile");
     } else {
         auto actions = m_actionGroup.actions();
         int profIdx = m_settings.value(QStringLiteral("recent"), 0).toInt();
@@ -129,7 +130,7 @@ void MainWindow::fetchConfig(const QString &profile)
 
     QUrl url(m_settings.value(QStringLiteral("url")).toString());
     if (!url.isValid()) {
-        ui->logPage->appendHtmlLog(url.errorString());
+        ui->logPage->appendLog(url.errorString());
         return;
     }
 
@@ -153,7 +154,7 @@ void MainWindow::fetchConfig(const QString &profile)
     QString logText("fetching configuration for profile \"");
     logText += profile;
     logText += '\"';
-    ui->logPage->appendHtmlLog(logText);
+    ui->logPage->appendLog(logText);
 }
 
 QByteArray MainWindow::decryptConfig(const QByteArray &ba)
@@ -162,7 +163,7 @@ QByteArray MainWindow::decryptConfig(const QByteArray &ba)
 
     QString key = m_settings.value(QStringLiteral("key")).toString();
     if (key.isEmpty()) {
-        ui->logPage->appendHtmlLog("key is empty");
+        ui->logPage->appendLog("key is empty");
         return result;
     }
 
@@ -183,7 +184,7 @@ QByteArray MainWindow::decryptConfig(const QByteArray &ba)
 
     if (!BIO_get_cipher_status(cipherBio)) {
         result.clear();
-        ui->logPage->appendHtmlLog("failed to decrypt configuration");
+        ui->logPage->appendLog("failed to decrypt configuration");
     }
 
     BIO_free_all(cipherBio);
@@ -291,14 +292,14 @@ void MainWindow::fetchCfgReplyFinished()
     reply->deleteLater();
 
     if (reply->error() != QNetworkReply::NoError) {
-        ui->logPage->appendHtmlLog(reply->errorString());
+        ui->logPage->appendLog(reply->errorString());
         return;
     }
 
     QDir dir(m_clash.workingDirectory());
     QFile file(dir.absoluteFilePath(QStringLiteral("config.yaml")));
     if (!file.open(QIODevice::WriteOnly)) {
-        ui->logPage->appendHtmlLog(file.errorString());
+        ui->logPage->appendLog(file.errorString());
         return;
     }
 
@@ -306,7 +307,7 @@ void MainWindow::fetchCfgReplyFinished()
     if (ba.isEmpty()) {
         return;
     }
-    ui->logPage->appendHtmlLog("decrypt configuration successfully");
+    ui->logPage->appendLog("decrypt configuration successfully");
 
     file.write(ba);
     file.close();
@@ -339,22 +340,22 @@ void MainWindow::clashErrorOccurred(QProcess::ProcessError error)
 {
     switch (error) {
     case QProcess::FailedToStart:
-        ui->logPage->appendHtmlLog("failed to start clash subprocess");
+        ui->logPage->appendLog("failed to start clash subprocess");
         break;
     case QProcess::Crashed:
-        ui->logPage->appendHtmlLog("clash subprocess crashed");
+        ui->logPage->appendLog("clash subprocess crashed");
         break;
     case QProcess::Timedout:
-        ui->logPage->appendHtmlLog("wait for clash subprocess time out");
+        ui->logPage->appendLog("wait for clash subprocess time out");
         break;
     case QProcess::WriteError:
-        ui->logPage->appendHtmlLog("failed to write to clash subprocess");
+        ui->logPage->appendLog("failed to write to clash subprocess");
         break;
     case QProcess::ReadError:
-        ui->logPage->appendHtmlLog("failed to read from clash subprocess");
+        ui->logPage->appendLog("failed to read from clash subprocess");
         break;
     default:
-        ui->logPage->appendHtmlLog("unknown error occurred in clash subprocess");
+        ui->logPage->appendLog("unknown error occurred in clash subprocess");
         break;
     }
 }
@@ -364,16 +365,10 @@ void MainWindow::clashFinished(int /*exitCode*/, QProcess::ExitStatus /*exitStat
     setTrayIcon(QIcon::Disabled);
 }
 
-void MainWindow::clashStderrReady()
-{
-    QProcess *subprocess = qobject_cast<QProcess *>(sender());
-    ui->logPage->appendTextLog(subprocess->readAll().trimmed());
-}
-
 void MainWindow::clashStdoutReady()
 {
     QProcess *subprocess = qobject_cast<QProcess *>(sender());
-    ui->logPage->appendTextLog(subprocess->readAll().trimmed());
+    ui->logPage->appendClashLog(subprocess->readAllStandardOutput().trimmed());
 }
 
 void MainWindow::clashStarted()

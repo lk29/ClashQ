@@ -4,7 +4,8 @@
 
 LogPage::LogPage(QWidget *parent) :
     QWidget(parent),
-    ui(new Ui::LogPage)
+    ui(new Ui::LogPage),
+    m_re(QStringLiteral(R"--(time="(.+?)" level=(.+?) msg="(.+)"$)--"), QRegularExpression::OptimizeOnFirstUsageOption)
 {
     ui->setupUi(this);
     ui->logEdit->setFont(QFont(QStringLiteral("Consolas"), 10));
@@ -15,38 +16,88 @@ LogPage::~LogPage()
     delete ui;
 }
 
-void LogPage::appendHtmlLog(const char *text)
+void LogPage::appendLog(const char *text)
 {
-    QString logText(genLogHeader());
-    logText += text;
+    QString html(genLogHeader());
+    html += text;
 
-    ui->logEdit->appendHtml(logText);
+    ui->logEdit->appendHtml(html);
 }
 
-void LogPage::appendHtmlLog(const QString &text)
+void LogPage::appendLog(const QString &text)
 {
-    QString logText(genLogHeader());
-    logText += text;
+    QString html(genLogHeader());
+    html += text;
 
-    ui->logEdit->appendHtml(logText);
+    ui->logEdit->appendHtml(html);
 }
 
-void LogPage::appendTextLog(const QString &text)
+void LogPage::appendClashLog(const QString &text)
 {
-    ui->logEdit->appendPlainText(text);
+    enum {
+        CapTime = 1,
+        CapLevel,
+        CapMsg,
+    };
+
+    QRegularExpressionMatch match = m_re.match(text);
+    if (match.hasMatch()) {
+        LogLevel level;
+        QStringRef levelStr = match.capturedRef(CapLevel);
+        if (levelStr == "debug") {
+            level = LogLevel::Debug;
+        } else if (levelStr == "info") {
+            level = LogLevel::Info;
+        } else if (levelStr == "warning") {
+            level = LogLevel::Warning;
+        } else if (levelStr == "error") {
+            level = LogLevel::Error;
+        } else {
+            level = LogLevel::Unknown;
+        }
+
+        QString html = genLogHeader(match.captured(CapTime), level);
+        html += match.capturedRef(CapMsg);
+
+        ui->logEdit->appendHtml(html);
+    } else {
+        ui->logEdit->appendPlainText(text);
+    }
 }
 
-QString LogPage::genLogHeader()
+QString LogPage::genLogHeader(const QString &time, LogLevel level)
 {
-    QDateTime now(QDateTime::currentDateTime());
-    // Make the formatted string have offset from UTC info.
-    // Qt's bug?
-    // https://bugreports.qt.io/browse/QTBUG-26161
-    now.setOffsetFromUtc(now.offsetFromUtc());
+    QString result;
 
-    QString header("<font color='#5c00e6'>");
-    header += now.toString(Qt::ISODate);
-    header += "</font>: ";
+    QDateTime dateTime;
+    if (time.isEmpty()) {
+        result += "<font color='#5c00e6'>";
+        dateTime = QDateTime::currentDateTime();
+    } else {
+        dateTime = QDateTime::fromString(time, Qt::ISODate);
+    }
+    result += dateTime.toString(QStringLiteral("yyyy-MM-dd HH:mm:ss"));
+    if (time.isEmpty()) {
+        result += "</font>";
+    }
 
-    return header;
+    switch (level) {
+    case LogLevel::Debug:
+        result += " DEBUG: ";
+        break;
+    case LogLevel::Info:
+        result += " &nbsp;INFO: ";
+        break;
+    case LogLevel::Warning:
+        result += " &nbsp;<font color='#ffcc00'>WARN</font>: ";
+        break;
+    case LogLevel::Error:
+        result += " <font color='#e63900'>ERROR</font>: ";
+        break;
+    default:
+        result += " <font color='#0000e6'>UNKNO</font>: ";
+        break;
+    }
+
+    return result;
 }

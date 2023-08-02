@@ -48,7 +48,6 @@ private slots:
     void getVerReplyFinished();
     void clashErrorOccurred(QProcess::ProcessError error);
     void clashFinished(int exitCode, QProcess::ExitStatus exitStatus);
-    void clashStderrReady();
     void clashStdoutReady();
     void clashStarted();
     void trayIconActivated(QSystemTrayIcon::ActivationReason reason);
