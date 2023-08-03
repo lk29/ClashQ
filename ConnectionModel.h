@@ -38,8 +38,8 @@ private slots:
 
 private:
     struct ConnInfo {
-        int upload;
-        int download;
+        double upload;
+        double download;
         QDateTime start;
         QString id;
         QString host;

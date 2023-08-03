@@ -45,8 +45,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     m_trayIconMenu.addSeparator();
     QAction *actionOpenCfg = m_trayIconMenu.addAction(QStringLiteral("Open Config"));
-    connect(actionOpenCfg, &QAction::triggered, this, &MainWindow::openCfgTriggered);
     QAction *actionOpenClashCfg = m_trayIconMenu.addAction(QStringLiteral("Open Clash Config"));
+    connect(actionOpenCfg, &QAction::triggered, this, &MainWindow::openCfgTriggered);
     connect(actionOpenClashCfg, &QAction::triggered, this, &MainWindow::openClashCfgTriggered);
 
     m_trayIconMenu.addSeparator();

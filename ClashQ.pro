@@ -1,6 +1,4 @@
-QT       += core gui printsupport
-
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets network
+QT += core gui widgets network printsupport
 
 CONFIG += c++17
 
@@ -137,9 +135,9 @@ FORMS += \
     MainWindow.ui \
     TrafficPage.ui
 
-INCLUDEPATH += D:\Downloads\openssl-1.0.2\inc32
+INCLUDEPATH += ..\openssl-1.0.2\inc32
 
-LIBS += -LD:\Downloads\openssl-1.0.2\out32dll -llibeay32
+LIBS += -L..\openssl-1.0.2\out32dll -llibeay32
 
 RC_ICONS = app.ico
 

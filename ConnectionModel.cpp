@@ -188,8 +188,8 @@ void ConnectionModel::replyFinished()
         ConnInfo info;
         info.id = connObj[QLatin1String("id")].toString();
         info.host = metaObj[QLatin1String("host")].toString();
-        info.upload = connObj[QLatin1String("upload")].toInt();
-        info.download = connObj[QLatin1String("download")].toInt();
+        info.upload = connObj[QLatin1String("upload")].toDouble();
+        info.download = connObj[QLatin1String("download")].toDouble();
         info.chains = chainsStrs.join('/');
         info.rule = connObj[QLatin1String("rule")].toString();
         QString rulePayload(connObj[QLatin1String("rulePayload")].toString());

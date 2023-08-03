@@ -124,4 +124,3 @@ void TrafficPage::mainWndHidden()
     dlGraph->data()->clear();
     ui->plot->replot();
 }
-

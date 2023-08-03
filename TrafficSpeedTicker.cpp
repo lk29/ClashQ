@@ -5,4 +5,3 @@ QString TrafficSpeedTicker::getTickLabel(double tick, const QLocale &/*locale*/,
 {
     return prettyBytes(tick);
 }
-
