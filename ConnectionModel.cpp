@@ -170,11 +170,8 @@ void ConnectionModel::replyFinished()
 
     Application::mainWindow().updateConnStats(ulTotal, dlTotal, conns.count());
 
-    QVector<int> indexes;
-    indexes.reserve(m_connInfos.size());
-    for (int i = 0; i < m_connInfos.size(); ++i) {
-        indexes.append(i);
-    }
+    QVector<int> indexes(m_connInfos.size());
+    std::iota(indexes.begin(), indexes.end(), 0);
 
     for (int i = 0; i < conns.count(); ++i) {
         QJsonObject connObj = conns[i].toObject();

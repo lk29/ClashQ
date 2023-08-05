@@ -19,7 +19,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_sizeAdjusted(false),
     m_hidden(true),
     m_sysShutdown(false),
-    m_settings(iniFilePath(), QSettings::IniFormat),
+    m_settings(getFilePath(PathType::IniFile), QSettings::IniFormat),
     m_actionGroup(nullptr)
 {
     ui->setupUi(this);
@@ -58,11 +58,9 @@ MainWindow::MainWindow(QWidget *parent) :
     m_trayIcon.show();
     connect(&m_trayIcon, &QSystemTrayIcon::activated, this, &MainWindow::trayIconActivated);
 
-    QDir dir(QCoreApplication::applicationDirPath());
-    dir.cd(QStringLiteral("clash"));
-    m_clash.setWorkingDirectory(dir.absolutePath());
-    m_clash.setArguments(QStringList() << "-d" << "." << "-f" << "config.yaml");
-    m_clash.setProgram(dir.absoluteFilePath("clash-windows-amd64-v3.exe"));
+    m_clash.setWorkingDirectory(getFilePath(PathType::BaseDir));
+    m_clash.setArguments(QStringList() << "-d" << ".");
+    m_clash.setProgram(getFilePath(PathType::ClashExecutable));
     m_clash.closeReadChannel(QProcess::StandardError);
     m_clash.closeWriteChannel();
 
@@ -280,10 +278,23 @@ bool MainWindow::event(QEvent *event)
     return QMainWindow::event(event);
 }
 
-QString MainWindow::iniFilePath()
+QString MainWindow::getFilePath(PathType pt)
 {
-    QDir dir(QCoreApplication::applicationDirPath());
-    return dir.absoluteFilePath(QStringLiteral("config.ini"));
+    QDir dir = QDir::home();
+    dir.cd(QStringLiteral("clash"));
+
+    switch (pt) {
+    case PathType::BaseDir:
+        return dir.absolutePath();
+    case PathType::IniFile:
+        return dir.absoluteFilePath(QStringLiteral("config.ini"));
+    case PathType::ClashExecutable:
+        return dir.absoluteFilePath(QStringLiteral("clash.exe"));
+    case PathType::ClashConfig:
+        return dir.absoluteFilePath(QStringLiteral("config.yaml"));
+    default:
+        return QString();
+    }
 }
 
 void MainWindow::fetchCfgReplyFinished()
@@ -296,8 +307,7 @@ void MainWindow::fetchCfgReplyFinished()
         return;
     }
 
-    QDir dir(m_clash.workingDirectory());
-    QFile file(dir.absoluteFilePath(QStringLiteral("config.yaml")));
+    QFile file(getFilePath(PathType::ClashConfig));
     if (!file.open(QIODevice::WriteOnly)) {
         ui->logPage->appendLog(file.errorString());
         return;
@@ -411,12 +421,10 @@ void MainWindow::actionGroupTriggered(QAction *action)
 
 void MainWindow::openCfgTriggered()
 {
-    QDir dir(QCoreApplication::applicationDirPath());
-    QDesktopServices::openUrl(QUrl::fromLocalFile(dir.absoluteFilePath("config.ini")));
+    QDesktopServices::openUrl(QUrl::fromLocalFile(getFilePath(PathType::IniFile)));
 }
 
 void MainWindow::openClashCfgTriggered()
 {
-    QDir dir(m_clash.workingDirectory());
-    QDesktopServices::openUrl(QUrl::fromLocalFile(dir.absoluteFilePath("config.yaml")));
+    QDesktopServices::openUrl(QUrl::fromLocalFile(getFilePath(PathType::ClashConfig)));
 }

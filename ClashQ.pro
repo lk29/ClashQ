@@ -135,9 +135,9 @@ FORMS += \
     MainWindow.ui \
     TrafficPage.ui
 
-INCLUDEPATH += ..\openssl-1.0.2\inc32
+INCLUDEPATH += ..\openssl\include
 
-LIBS += -L..\openssl-1.0.2\out32dll -llibeay32
+LIBS += -L..\openssl -llibcrypto
 
 RC_ICONS = app.ico
 

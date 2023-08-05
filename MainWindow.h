@@ -41,7 +41,14 @@ private:
     virtual void closeEvent(QCloseEvent *event) override;
     virtual bool event(QEvent *event) override;
 
-    static QString iniFilePath();
+    enum class PathType {
+        BaseDir,
+        IniFile,
+        ClashExecutable,
+        ClashConfig,
+    };
+
+    static QString getFilePath(PathType pt);
 
 private slots:
     void fetchCfgReplyFinished();
