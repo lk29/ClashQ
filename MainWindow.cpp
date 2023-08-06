@@ -45,8 +45,10 @@ MainWindow::MainWindow(QWidget *parent) :
     m_trayIconMenu.addSeparator();
     QAction *actionOpenCfg = m_trayIconMenu.addAction(QStringLiteral("Open Config"));
     QAction *actionOpenClashCfg = m_trayIconMenu.addAction(QStringLiteral("Open Clash Config"));
+    QAction *actionOpenWorkDir = m_trayIconMenu.addAction(QStringLiteral("Open Working Directory"));
     connect(actionOpenCfg, &QAction::triggered, this, &MainWindow::openCfgTriggered);
     connect(actionOpenClashCfg, &QAction::triggered, this, &MainWindow::openClashCfgTriggered);
+    connect(actionOpenWorkDir, &QAction::triggered, this, &MainWindow::openWorkDirTriggered);
 
     m_trayIconMenu.addSeparator();
     QAction *actionQuit = m_trayIconMenu.addAction(QStringLiteral("Quit"));
@@ -391,6 +393,11 @@ void MainWindow::openCfgTriggered()
 void MainWindow::openClashCfgTriggered()
 {
     QDesktopServices::openUrl(QUrl::fromLocalFile(getFilePath(PathType::ClashConfig)));
+}
+
+void MainWindow::openWorkDirTriggered()
+{
+    QDesktopServices::openUrl(QUrl::fromLocalFile(getFilePath(PathType::BaseDir)));
 }
 
 QString MainWindow::getFilePath(PathType pt)

@@ -49,6 +49,7 @@ private:
     void actionGroupTriggered(QAction *action);
     void openCfgTriggered();
     void openClashCfgTriggered();
+    void openWorkDirTriggered();
 
     enum class PathType {
         BaseDir,
