@@ -17,7 +17,6 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
     m_sizeAdjusted(false),
-    m_hidden(true),
     m_sysShutdown(false),
     m_settings(getFilePath(PathType::IniFile), QSettings::IniFormat),
     m_actionGroup(nullptr)
@@ -120,114 +119,10 @@ bool MainWindow::nativeEventFilter(const QByteArray & /*eventType*/, void *messa
     return false;
 }
 
-void MainWindow::fetchConfig(const QString &profile)
-{
-    QString tooltip("Profile: ");
-    tooltip += profile;
-    m_trayIcon.setToolTip(tooltip);
-
-    QUrl url(m_settings.value(QStringLiteral("url")).toString());
-    if (!url.isValid()) {
-        ui->logPage->appendLog(url.errorString());
-        return;
-    }
-
-    QString path('/');
-    path += profile.toLower();
-    snprintf(m_iv, sizeof(m_iv), "%08d", int(time(nullptr) % 100000000));
-
-    url.setPath(path);
-    url.setQuery(m_iv);
-
-    QSslConfiguration sslConfig = QSslConfiguration::defaultConfiguration();
-    sslConfig.setPeerVerifyMode(QSslSocket::VerifyNone);
-
-    QNetworkRequest request(url);
-    request.setSslConfiguration(sslConfig);
-    request.setHeader(QNetworkRequest::UserAgentHeader, "ClashQ");
-
-    QNetworkReply *reply = Application::netMgmr().get(request);
-    connect(reply, &QNetworkReply::finished, this, &MainWindow::fetchCfgReplyFinished);
-
-    QString logText("fetching configuration for profile \"");
-    logText += profile;
-    logText += '\"';
-    ui->logPage->appendLog(logText);
-}
-
-QByteArray MainWindow::decryptConfig(const QByteArray &ba)
-{
-    QByteArray result;
-
-    QString key = m_settings.value(QStringLiteral("key")).toString();
-    if (key.isEmpty()) {
-        ui->logPage->appendLog("key is empty");
-        return result;
-    }
-
-    const EVP_CIPHER *cipher = EVP_get_cipherbyname("des");
-    BIO *memBio = BIO_new_mem_buf(ba.data(), ba.size());
-    BIO *b64Bio = BIO_new(BIO_f_base64());
-    BIO *cipherBio = BIO_new(BIO_f_cipher());
-    BIO_set_cipher(cipherBio, cipher, (unsigned char *)key.toStdString().c_str(), (unsigned char *)m_iv, 0);
-
-    BIO_push(b64Bio, memBio);
-    BIO_push(cipherBio, b64Bio);
-
-    int len;
-    char buf[1024];
-    while ((len = BIO_read(cipherBio, buf, sizeof(buf))) > 0) {
-        result.append(buf, len);
-    }
-
-    if (!BIO_get_cipher_status(cipherBio)) {
-        result.clear();
-        ui->logPage->appendLog("failed to decrypt configuration");
-    }
-
-    BIO_free_all(cipherBio);
-    return result;
-}
-
-void MainWindow::setTrayIcon(QIcon::Mode mode)
-{
-    QIcon icon(QStringLiteral(":/app.ico"));
-    if (mode == QIcon::Disabled) {
-        m_trayIcon.setIcon(icon.pixmap(16, 16, mode));
-    } else {
-        m_trayIcon.setIcon(icon);
-    }
-}
-
-void MainWindow::keyPressEvent(QKeyEvent *event)
-{
-    if (event->key() == Qt::Key_Tab) {
-        int index = ui->tabWidget->currentIndex();
-        if (++index >= ui->tabWidget->count()) {
-            index = 0;
-        }
-        ui->tabWidget->setCurrentIndex(index);
-        return;
-    }
-    QMainWindow::keyPressEvent(event);
-}
-
 void MainWindow::showEvent(QShowEvent *event)
 {
-    if (m_hidden) {
-        m_hidden = false;
-        emit becomeVisible();
-    }
+    emit becomeVisible();
     QMainWindow::showEvent(event);
-}
-
-void MainWindow::hideEvent(QHideEvent *event)
-{
-    if (!event->spontaneous() && !isVisible()) {
-        m_hidden = true;
-        emit becomeHidden();
-    }
-    QMainWindow::hideEvent(event);
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -278,22 +173,92 @@ bool MainWindow::event(QEvent *event)
     return QMainWindow::event(event);
 }
 
-QString MainWindow::getFilePath(PathType pt)
+void MainWindow::fetchConfig(const QString &profile)
 {
-    QDir dir = QDir::home();
-    dir.cd(QStringLiteral("clash"));
+    QString tooltip("Profile: ");
+    tooltip += profile;
+    m_trayIcon.setToolTip(tooltip);
 
-    switch (pt) {
-    case PathType::BaseDir:
-        return dir.absolutePath();
-    case PathType::IniFile:
-        return dir.absoluteFilePath(QStringLiteral("config.ini"));
-    case PathType::ClashExecutable:
-        return dir.absoluteFilePath(QStringLiteral("clash.exe"));
-    case PathType::ClashConfig:
-        return dir.absoluteFilePath(QStringLiteral("config.yaml"));
-    default:
-        return QString();
+    QUrl url(m_settings.value(QStringLiteral("url")).toString());
+    if (!url.isValid()) {
+        ui->logPage->appendLog(url.errorString());
+        return;
+    }
+
+    QString path('/');
+    path += profile.toLower();
+    snprintf(m_iv, sizeof(m_iv), "%08d", int(time(nullptr) % 100000000));
+
+    url.setPath(path);
+    url.setQuery(m_iv);
+
+    QSslConfiguration sslConfig = QSslConfiguration::defaultConfiguration();
+    sslConfig.setPeerVerifyMode(QSslSocket::VerifyNone);
+
+    QNetworkRequest request(url);
+    request.setSslConfiguration(sslConfig);
+    request.setHeader(QNetworkRequest::UserAgentHeader, "ClashQ");
+
+    QNetworkReply *reply = Application::netMgmr().get(request);
+    connect(reply, &QNetworkReply::finished, this, &MainWindow::fetchCfgReplyFinished);
+
+    QString logText("fetching configuration for profile \"");
+    logText += profile;
+    logText += '\"';
+    ui->logPage->appendLog(logText);
+}
+
+void MainWindow::fetchClashVer()
+{
+    QUrl url(Application::clashApiUrl());
+    url.setPath(QStringLiteral("/version"));
+
+    QNetworkRequest request(url);
+    QNetworkReply *reply = Application::netMgmr().get(request);
+    connect(reply, &QNetworkReply::finished, this, &MainWindow::getVerReplyFinished);
+}
+
+QByteArray MainWindow::decryptConfig(const QByteArray &ba)
+{
+    QByteArray result;
+
+    QString key = m_settings.value(QStringLiteral("key")).toString();
+    if (key.isEmpty()) {
+        ui->logPage->appendLog("key is empty");
+        return result;
+    }
+
+    const EVP_CIPHER *cipher = EVP_get_cipherbyname("des");
+    BIO *memBio = BIO_new_mem_buf(ba.data(), ba.size());
+    BIO *b64Bio = BIO_new(BIO_f_base64());
+    BIO *cipherBio = BIO_new(BIO_f_cipher());
+    BIO_set_cipher(cipherBio, cipher, (unsigned char *)key.toStdString().c_str(), (unsigned char *)m_iv, 0);
+
+    BIO_push(b64Bio, memBio);
+    BIO_push(cipherBio, b64Bio);
+
+    int len;
+    char buf[1024];
+    while ((len = BIO_read(cipherBio, buf, sizeof(buf))) > 0) {
+        result.append(buf, len);
+    }
+
+    if (!BIO_get_cipher_status(cipherBio)) {
+        result.clear();
+        ui->logPage->appendLog("failed to decrypt configuration");
+    }
+
+    BIO_free_all(cipherBio);
+    return result;
+}
+
+void MainWindow::setTrayIcon(QIcon::Mode mode)
+{
+    QIcon icon(QStringLiteral(":/app.ico"));
+    if (mode == QIcon::Disabled) {
+        m_trayIcon.setIcon(icon.pixmap(16, 16, mode));
+    } else {
+        m_trayIcon.setIcon(icon);
     }
 }
 
@@ -331,6 +296,11 @@ void MainWindow::getVerReplyFinished()
     reply->deleteLater();
 
     if (reply->error() != QNetworkReply::NoError) {
+        QString log("failed to get clash version (");
+        log += reply->errorString();
+        log += ')';
+        ui->logPage->appendLog(log);
+        QTimer::singleShot(1000, this, &MainWindow::fetchClashVer);
         return;
     }
 
@@ -384,13 +354,7 @@ void MainWindow::clashStdoutReady()
 void MainWindow::clashStarted()
 {
     setTrayIcon(QIcon::Normal);
-
-    QUrl url(Application::clashApiUrl());
-    url.setPath(QStringLiteral("/version"));
-
-    QNetworkRequest request(url);
-    QNetworkReply *reply = Application::netMgmr().get(request);
-    connect(reply, &QNetworkReply::finished, this, &MainWindow::getVerReplyFinished);
+    QTimer::singleShot(1000, this, &MainWindow::fetchClashVer);
 }
 
 void MainWindow::trayIconActivated(QSystemTrayIcon::ActivationReason reason)
@@ -427,4 +391,23 @@ void MainWindow::openCfgTriggered()
 void MainWindow::openClashCfgTriggered()
 {
     QDesktopServices::openUrl(QUrl::fromLocalFile(getFilePath(PathType::ClashConfig)));
+}
+
+QString MainWindow::getFilePath(PathType pt)
+{
+    QDir dir = QDir::home();
+    dir.cd(QStringLiteral("clash"));
+
+    switch (pt) {
+    case PathType::BaseDir:
+        return dir.absolutePath();
+    case PathType::IniFile:
+        return dir.absoluteFilePath(QStringLiteral("config.ini"));
+    case PathType::ClashExecutable:
+        return dir.absoluteFilePath(QStringLiteral("clash.exe"));
+    case PathType::ClashConfig:
+        return dir.absoluteFilePath(QStringLiteral("config.yaml"));
+    default:
+        return QString();
+    }
 }

@@ -11,7 +11,7 @@ const double TrafficPage::s_maxX = 180;
 TrafficPage::TrafficPage(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::TrafficPage),
-    m_mainWndVisible(false)
+    m_reqOngoing(false)
 {
     ui->setupUi(this);
     ui->plot->xAxis->setRange(0, s_maxX);
@@ -33,8 +33,7 @@ TrafficPage::TrafficPage(QWidget *parent) :
     dlGraph->setPen(QPen(Qt::red));
     dlGraph->setBrush(dlBrush);
 
-    connect(&Application::mainWindow(), &MainWindow::becomeVisible, this, &TrafficPage::mainWndVisible);
-    connect(&Application::mainWindow(), &MainWindow::becomeHidden, this, &TrafficPage::mainWndHidden);
+    connect(&Application::mainWindow(), &MainWindow::becomeVisible, this, &TrafficPage::sendRequest);
 }
 
 TrafficPage::~TrafficPage()
@@ -42,21 +41,37 @@ TrafficPage::~TrafficPage()
     delete ui;
 }
 
+void TrafficPage::showEvent(QShowEvent *event)
+{
+    QWidget::showEvent(event);
+
+    ui->plot->yAxis->rescale(true);
+    ui->plot->replot();
+}
+
 void TrafficPage::sendRequest()
 {
-    QUrl url(Application::clashApiUrl());
-    url.setPath(QStringLiteral("/traffic"));
+    if (!m_reqOngoing) {
+        m_reqOngoing = true;
 
-    QNetworkRequest request(url);
-    QNetworkReply *reply = Application::netMgmr().get(request);
-    connect(reply, &QNetworkReply::readyRead, this, &TrafficPage::replyReadyRead);
-    connect(reply, &QNetworkReply::finished, this, &TrafficPage::replyFinished);
+        QUrl url(Application::clashApiUrl());
+        url.setPath(QStringLiteral("/traffic"));
+
+        QNetworkRequest request(url);
+        QNetworkReply *reply = Application::netMgmr().get(request);
+        connect(reply, &QNetworkReply::readyRead, this, &TrafficPage::replyReadyRead);
+        connect(reply, &QNetworkReply::finished, this, &TrafficPage::replyFinished);
+    }
 }
 
 void TrafficPage::replyReadyRead()
 {
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
-    if (!m_mainWndVisible) {
+    if (!Application::mainWindow().isVisible() || Application::mainWindow().isMinimized()) {
+        QCPGraph *ulGraph = ui->plot->graph(0);
+        QCPGraph *dlGraph = ui->plot->graph(1);
+        ulGraph->data()->clear();
+        dlGraph->data()->clear();
         reply->close();
         return;
     }
@@ -94,8 +109,11 @@ void TrafficPage::replyReadyRead()
 
     ulData->set(ulNewData, true);
     dlData->set(dlNewData, true);
-    ui->plot->yAxis->rescale(true);
-    ui->plot->replot();
+
+    if (isVisible()) {
+        ui->plot->yAxis->rescale(true);
+        ui->plot->replot();
+    }
 }
 
 void TrafficPage::replyFinished()
@@ -103,24 +121,8 @@ void TrafficPage::replyFinished()
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
     reply->deleteLater();
 
-    if (m_mainWndVisible) {
-        QTimer::singleShot(3000, this, &TrafficPage::sendRequest);
+    m_reqOngoing = false;
+    if (Application::mainWindow().isVisible() && !Application::mainWindow().isMinimized()) {
+        QTimer::singleShot(1000, this, &TrafficPage::sendRequest);
     }
-}
-
-void TrafficPage::mainWndVisible()
-{
-    m_mainWndVisible = true;
-    sendRequest();
-}
-
-void TrafficPage::mainWndHidden()
-{
-    m_mainWndVisible = false;
-
-    QCPGraph *ulGraph = ui->plot->graph(0);
-    QCPGraph *dlGraph = ui->plot->graph(1);
-    ulGraph->data()->clear();
-    dlGraph->data()->clear();
-    ui->plot->replot();
 }

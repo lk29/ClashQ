@@ -9,10 +9,9 @@
 
 ConnectionModel::ConnectionModel(QObject *parent) :
     QAbstractTableModel(parent),
-    m_mainWndVisible(false)
+    m_reqOngoing(false)
 {
-    connect(&Application::mainWindow(), &MainWindow::becomeVisible, this, &ConnectionModel::mainWndVisible);
-    connect(&Application::mainWindow(), &MainWindow::becomeHidden, this, &ConnectionModel::mainWndHidden);
+    connect(&Application::mainWindow(), &MainWindow::becomeVisible, this, &ConnectionModel::sendRequest);
 }
 
 QVariant ConnectionModel::headerData(int section, Qt::Orientation orientation, int role) const
@@ -143,12 +142,16 @@ QVariant ConnectionModel::data(const QModelIndex &index, int role) const
 
 void ConnectionModel::sendRequest()
 {
-    QUrl url(Application::clashApiUrl());
-    url.setPath(QStringLiteral("/connections"));
+    if (!m_reqOngoing) {
+        m_reqOngoing = true;
 
-    QNetworkRequest request(url);
-    QNetworkReply *reply = Application::netMgmr().get(request);
-    connect(reply, &QNetworkReply::finished, this, &ConnectionModel::replyFinished);
+        QUrl url(Application::clashApiUrl());
+        url.setPath(QStringLiteral("/connections"));
+
+        QNetworkRequest request(url);
+        QNetworkReply *reply = Application::netMgmr().get(request);
+        connect(reply, &QNetworkReply::finished, this, &ConnectionModel::replyFinished);
+    }
 }
 
 void ConnectionModel::replyFinished()
@@ -156,7 +159,8 @@ void ConnectionModel::replyFinished()
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
     reply->deleteLater();
 
-    if (!m_mainWndVisible) {
+    m_reqOngoing = false;
+    if (!Application::mainWindow().isVisible() || Application::mainWindow().isMinimized()) {
         return;
     }
 
@@ -235,15 +239,4 @@ void ConnectionModel::replyFinished()
         m_connInfos.remove(idx);
         endRemoveRows();
     }
-}
-
-void ConnectionModel::mainWndVisible()
-{
-    m_mainWndVisible = true;
-    sendRequest();
-}
-
-void ConnectionModel::mainWndHidden()
-{
-    m_mainWndVisible = false;
 }

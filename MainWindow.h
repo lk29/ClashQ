@@ -28,29 +28,17 @@ public:
 
 signals:
     void becomeVisible();
-    void becomeHidden();
 
 private:
-    void fetchConfig(const QString &profile);
-    QByteArray decryptConfig(const QByteArray &ba);
-    void setTrayIcon(QIcon::Mode mode);
-
-    virtual void keyPressEvent(QKeyEvent *event) override;
     virtual void showEvent(QShowEvent *event) override;
-    virtual void hideEvent(QHideEvent *event) override;
     virtual void closeEvent(QCloseEvent *event) override;
     virtual bool event(QEvent *event) override;
 
-    enum class PathType {
-        BaseDir,
-        IniFile,
-        ClashExecutable,
-        ClashConfig,
-    };
+    void fetchConfig(const QString &profile);
+    void fetchClashVer();
+    QByteArray decryptConfig(const QByteArray &ba);
+    void setTrayIcon(QIcon::Mode mode);
 
-    static QString getFilePath(PathType pt);
-
-private slots:
     void fetchCfgReplyFinished();
     void getVerReplyFinished();
     void clashErrorOccurred(QProcess::ProcessError error);
@@ -62,11 +50,19 @@ private slots:
     void openCfgTriggered();
     void openClashCfgTriggered();
 
+    enum class PathType {
+        BaseDir,
+        IniFile,
+        ClashExecutable,
+        ClashConfig,
+    };
+
+    static QString getFilePath(PathType pt);
+
 private:
     Ui::MainWindow *ui;
     char m_iv[9];
     bool m_sizeAdjusted;
-    bool m_hidden;
     bool m_sysShutdown;
     QSettings m_settings;
     QMenu m_trayIconMenu;

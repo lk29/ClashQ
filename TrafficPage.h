@@ -15,16 +15,16 @@ public:
     explicit TrafficPage(QWidget *parent = nullptr);
     ~TrafficPage();
 
-private slots:
+private:
+    virtual void showEvent(QShowEvent *event) override;
+
     void sendRequest();
     void replyReadyRead();
     void replyFinished();
-    void mainWndVisible();
-    void mainWndHidden();
 
 private:
     Ui::TrafficPage *ui;
-    bool m_mainWndVisible;
+    bool m_reqOngoing;
 
     static const double s_maxX;
 };
