@@ -149,8 +149,16 @@ bool MainWindow::event(QEvent *event)
 {
     switch (event->type()) {
     case QEvent::WindowStateChange:
-        if (isMinimized() && !event->spontaneous()) {
-            QTimer::singleShot(150, this, &MainWindow::hide);
+        if (isMinimized()) {
+            if (!event->spontaneous()) {
+                QTimer::singleShot(150, this, &MainWindow::hide);
+            }
+        } else {
+            // If application is minimized through Win+D, showEvent won't be called if application is restored
+            // after clicking taskbar icon.
+            if (static_cast<QWindowStateChangeEvent *>(event)->oldState().testFlag(Qt::WindowMinimized)) {
+                emit becomeVisible();
+            }
         }
         break;
     case QEvent::ShowToParent:
