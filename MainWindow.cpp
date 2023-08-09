@@ -60,7 +60,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(&m_trayIcon, &QSystemTrayIcon::activated, this, &MainWindow::trayIconActivated);
 
     m_clash.setWorkingDirectory(getFilePath(PathType::BaseDir));
-    m_clash.setArguments(QStringList() << "-d" << ".");
+    m_clash.setArguments({ "-d", "." });
     m_clash.setProgram(getFilePath(PathType::ClashExecutable));
     m_clash.closeReadChannel(QProcess::StandardError);
     m_clash.closeWriteChannel();
@@ -86,7 +86,8 @@ MainWindow::MainWindow(QWidget *parent) :
 MainWindow::~MainWindow()
 {
     if (m_clash.state() == QProcess::Running) {
-        m_clash.close();
+        sendCtrlCToProcess(m_clash.processId());
+        m_clash.waitForFinished();
     }
     delete ui;
 }
@@ -350,8 +351,17 @@ void MainWindow::clashErrorOccurred(QProcess::ProcessError error)
     }
 }
 
-void MainWindow::clashFinished(int /*exitCode*/, QProcess::ExitStatus /*exitStatus*/)
+void MainWindow::clashFinished(int exitCode, QProcess::ExitStatus exitStatus)
 {
+    QString logText("clash ");
+    if (exitStatus == QProcess::NormalExit) {
+        logText += "exited with code ";
+        logText += QString::number(exitCode);
+    } else {
+        logText += "crashed";
+    }
+    ui->logPage->appendLog(logText);
+
     setTrayIcon(QIcon::Disabled);
 }
 
@@ -386,7 +396,7 @@ void MainWindow::trayIconActivated(QSystemTrayIcon::ActivationReason reason)
 void MainWindow::actionGroupTriggered(QAction *action)
 {
     if (m_clash.state() == QProcess::Running) {
-        m_clash.close();
+        sendCtrlCToProcess(m_clash.processId());
         m_clash.waitForFinished();
     }
 
@@ -424,5 +434,13 @@ QString MainWindow::getFilePath(PathType pt)
         return dir.absoluteFilePath(QStringLiteral("config.yaml"));
     default:
         return QString();
+    }
+}
+
+void MainWindow::sendCtrlCToProcess(qint64 pid)
+{
+    if (AttachConsole(pid)) {
+        GenerateConsoleCtrlEvent(CTRL_C_EVENT, pid);
+        FreeConsole();
     }
 }

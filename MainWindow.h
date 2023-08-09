@@ -60,6 +60,8 @@ private:
 
     static QString getFilePath(PathType pt);
 
+    static void sendCtrlCToProcess(qint64 pid);
+
 private:
     Ui::MainWindow *ui;
     char m_iv[9];
