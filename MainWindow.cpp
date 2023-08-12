@@ -167,8 +167,7 @@ bool MainWindow::event(QEvent *event)
             m_sizeAdjusted = true;
 
             QSizeF newSize;
-            QFontMetricsF fm = fontMetrics();
-            newSize.setWidth(fm.averageCharWidth() * 250);
+            newSize.setWidth(ui->logPage->avgCharWidth() * 160);
             newSize.setHeight(newSize.width() * 9 / 16);
 
             QSizeF oldSize = size();

@@ -16,6 +16,8 @@ public:
     explicit LogPage(QWidget *parent = nullptr);
     ~LogPage();
 
+    int avgCharWidth() const;
+
     void appendLog(const char *text);
     void appendLog(const QString &text);
     void appendClashLog(const QString &text);

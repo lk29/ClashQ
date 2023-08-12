@@ -16,6 +16,11 @@ LogPage::~LogPage()
     delete ui;
 }
 
+int LogPage::avgCharWidth() const
+{
+    return ui->logEdit->fontMetrics().averageCharWidth();
+}
+
 void LogPage::appendLog(const char *text)
 {
     QString html(genLogHeader());
