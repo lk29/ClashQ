@@ -399,7 +399,12 @@ void MainWindow::actionGroupTriggered(QAction *action)
         m_clash.waitForFinished();
     }
 
-    fetchConfig(action->data().toString().toLower());
+    if (QGuiApplication::keyboardModifiers().testFlag(Qt::ControlModifier)) {
+        close();
+        QProcess::startDetached(Application::applicationFilePath(), QStringList());
+    } else {
+        fetchConfig(action->data().toString().toLower());
+    }
 }
 
 void MainWindow::openCfgTriggered()
