@@ -5,7 +5,7 @@
 LogPage::LogPage(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::LogPage),
-    m_re(QStringLiteral(R"--(time="(.+?)" level=(.+?) msg="(.+)"$)--"), QRegularExpression::OptimizeOnFirstUsageOption)
+    m_re(QStringLiteral(R"--(time="(.+?)" level=(.+?) msg="(.+)")--"))
 {
     ui->setupUi(this);
     ui->logEdit->setFont(QFont(QStringLiteral("Consolas"), 10));
@@ -45,8 +45,14 @@ void LogPage::appendClashLog(const QString &text)
         CapMsg,
     };
 
-    QRegularExpressionMatch match = m_re.match(text);
-    if (match.hasMatch()) {
+    QRegularExpressionMatchIterator iter = m_re.globalMatch(text);
+    if (!iter.hasNext()) {
+        ui->logEdit->appendPlainText(text);
+        return;
+    }
+    do {
+        QRegularExpressionMatch match = iter.next();
+
         LogLevel level;
         QStringRef levelStr = match.capturedRef(CapLevel);
         if (levelStr == "debug") {
@@ -65,9 +71,7 @@ void LogPage::appendClashLog(const QString &text)
         html += match.capturedRef(CapMsg);
 
         ui->logEdit->appendHtml(html);
-    } else {
-        ui->logEdit->appendPlainText(text);
-    }
+    } while (iter.hasNext());
 }
 
 QString LogPage::genLogHeader(const QString &time, LogLevel level)
