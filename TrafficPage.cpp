@@ -1,8 +1,9 @@
 #include "Application.h"
-#include "QCustomPlot/src/plottables/plottable-graph.h"
 #include "TrafficPage.h"
 #include "TrafficSpeedTicker.h"
 #include "ui_TrafficPage.h"
+#include <plottables/plottable-graph.h>
+#include <layoutelements/layoutelement-legend.h>
 #include <QJsonDocument>
 #include <QNetworkReply>
 
@@ -14,6 +15,7 @@ TrafficPage::TrafficPage(QWidget *parent) :
     m_reqOngoing(false)
 {
     ui->setupUi(this);
+    ui->plot->legend->setVisible(true);
     ui->plot->xAxis->setRange(0, s_maxX);
     ui->plot->xAxis->setTickLabels(false);
     ui->plot->xAxis->setTicks(false);
@@ -23,6 +25,7 @@ TrafficPage::TrafficPage(QWidget *parent) :
     QColor ulFillColor(Qt::blue);
     ulFillColor.setAlpha(60);
     QBrush ulBrush(ulFillColor);
+    ulGraph->setName(QStringLiteral("Upload"));
     ulGraph->setPen(QPen(Qt::blue));
     ulGraph->setBrush(ulBrush);
 
@@ -30,6 +33,7 @@ TrafficPage::TrafficPage(QWidget *parent) :
     QColor dlFillColor(Qt::red);
     dlFillColor.setAlpha(60);
     QBrush dlBrush(dlFillColor);
+    dlGraph->setName(QStringLiteral("Download"));
     dlGraph->setPen(QPen(Qt::red));
     dlGraph->setBrush(dlBrush);
 

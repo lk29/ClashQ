@@ -135,7 +135,7 @@ FORMS += \
     MainWindow.ui \
     TrafficPage.ui
 
-INCLUDEPATH += ../openssl/include
+INCLUDEPATH += ../openssl/include QCustomPlot/src
 
 LIBS += -L../openssl -llibcrypto
 
