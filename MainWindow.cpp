@@ -54,7 +54,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QAction *actionQuit = m_trayIconMenu.addAction(QStringLiteral("Quit"));
     connect(actionQuit, &QAction::triggered, this, &MainWindow::close);
 
-    setTrayIcon(QIcon::Disabled);
+    setIcon(QIcon::Disabled);
     m_trayIcon.setContextMenu(&m_trayIconMenu);
     m_trayIcon.show();
     connect(&m_trayIcon, &QSystemTrayIcon::activated, this, &MainWindow::trayIconActivated);
@@ -262,12 +262,15 @@ QByteArray MainWindow::decryptConfig(const QByteArray &ba)
     return result;
 }
 
-void MainWindow::setTrayIcon(QIcon::Mode mode)
+void MainWindow::setIcon(QIcon::Mode mode)
 {
     QIcon icon(QStringLiteral(":/app.ico"));
     if (mode == QIcon::Disabled) {
-        m_trayIcon.setIcon(icon.pixmap(16, 16, mode));
+        QIcon disIcon(icon.pixmap(32, 32, mode));
+        setWindowIcon(disIcon);
+        m_trayIcon.setIcon(disIcon);
     } else {
+        setWindowIcon(icon);
         m_trayIcon.setIcon(icon);
     }
 }
@@ -361,7 +364,7 @@ void MainWindow::clashFinished(int exitCode, QProcess::ExitStatus exitStatus)
     }
     ui->logPage->appendLog(logText);
 
-    setTrayIcon(QIcon::Disabled);
+    setIcon(QIcon::Disabled);
 }
 
 void MainWindow::clashStdoutReady()
@@ -372,7 +375,7 @@ void MainWindow::clashStdoutReady()
 
 void MainWindow::clashStarted()
 {
-    setTrayIcon(QIcon::Normal);
+    setIcon(QIcon::Normal);
     QTimer::singleShot(1000, this, &MainWindow::fetchClashVer);
 }
 

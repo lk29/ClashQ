@@ -37,7 +37,7 @@ private:
     void fetchConfig(const QString &profile);
     void fetchClashVer();
     QByteArray decryptConfig(const QByteArray &ba);
-    void setTrayIcon(QIcon::Mode mode);
+    void setIcon(QIcon::Mode mode);
 
     void fetchCfgReplyFinished();
     void getVerReplyFinished();
