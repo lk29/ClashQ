@@ -1,0 +1,54 @@
+name: Release for Windows
+
+on:
+  push:
+    tags:
+      - v[0-9]+.[0-9]+.[0-9]+
+
+jobs:
+  release:
+    permissions: write-all
+    runs-on: windows-latest
+    steps:
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: '5.15.2'
+          host: 'windows'
+          target: 'desktop'
+          arch: 'win64_msvc2019_64'
+          tools: 'tools_openssl_x64'
+          cache: true
+
+      - name: Checkout source code
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: Install xmlstarlet
+        run: choco install xmlstarlet --no-progress
+
+      - name: Update version string
+        run: xml.exe edit --inplace --update "/ui/widget[@class='QMainWindow']/property[@name='windowTitle']/string" --value "ClashQ ${{ github.ref_name }}" MainWindow.ui
+
+      - name: Build source code
+        shell: cmd
+        run: |
+          FOR /F "delims=" %%d IN ('vswhere.exe -latest -property installationPath') DO @(CALL "%%d\VC\Auxiliary\Build\vcvars64.bat")
+          qmake
+          nmake
+
+      - name: Package application
+        shell: cmd
+        run: |
+          MKDIR ClashQ
+          COPY /B release\ClashQ.exe ClashQ
+          COPY /B %IQTA_TOOLS%\OpenSSL\Win_x64\bin\*.dll ClashQ
+          windeployqt.exe --release --no-translations --no-system-d3d-compiler --no-opengl-sw --no-compiler-runtime ClashQ\ClashQ.exe
+          tar.exe -cf ClashQ.zip ClashQ
+
+      - name: Upload to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          file: ClashQ.zip
+          asset_name: ClashQ-$tag.zip

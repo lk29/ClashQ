@@ -1,18 +1,19 @@
-# Build for Windows
+## How to use
 
-## Build openssl
+Put clash core (clash.exe) and the configuration file (config.ini) of this application in a directory named clash under user's home directory.
 
-Install [Perl](https://strawberryperl.com/) and [NASM](https://www.nasm.us/pub/nasm/releasebuilds/?C=M;O=D), then clone OpenSSL repository from github:
+## Configuration file
 
+```ini
+[General]
+# decryption key
+key=abcd5678
+# profile name will be appended to url when fetching clash configuration
+profile=office, home
+url=https://xxx.yyy
 ```
-git clone https://github.com/openssl/openssl.git
-cd openssl
-git checkout OpenSSL_1_1_1u
-```
 
-Open "x64 Native Tools Command Prompt" and follow the instructions in INSTALL to build, for example:
+# TODO
 
-```
-$ perl Configure VC-WIN64A
-$ nmake
-```
+- [ ] Build for macOS
+- [ ] Build for Linux

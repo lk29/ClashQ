@@ -135,9 +135,9 @@ FORMS += \
     MainWindow.ui \
     TrafficPage.ui
 
-INCLUDEPATH += ../openssl/include QCustomPlot/src
+INCLUDEPATH += $$[QT_INSTALL_PREFIX]/../../Tools/OpenSSL/Win_x64/include QCustomPlot/src
 
-LIBS += -L../openssl -llibcrypto
+LIBS += -L$$[QT_INSTALL_PREFIX]/../../Tools/OpenSSL/Win_x64/lib -llibcrypto
 
 RC_ICONS = app.ico
 
