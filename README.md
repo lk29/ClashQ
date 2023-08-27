@@ -13,7 +13,11 @@ profile=office, home
 url=https://xxx.yyy
 ```
 
-# TODO
+## Screenshot
+
+![traffic](http://ovs.wduiu.top/ClashQ_Traffic.png)
+
+## TODO
 
 - [ ] Build for macOS
 - [ ] Build for Linux

@@ -38,6 +38,7 @@ private:
     void fetchClashVer();
     QByteArray decryptConfig(const QByteArray &ba);
     void setIcon(QIcon::Mode mode);
+    bool isAutoStart();
 
     void fetchCfgReplyFinished();
     void getVerReplyFinished();
@@ -50,6 +51,7 @@ private:
     void openCfgTriggered();
     void openClashCfgTriggered();
     void openWorkDirTriggered();
+    void autoStartTriggered(bool checked);
 
     enum class PathType {
         BaseDir,

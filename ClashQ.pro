@@ -137,7 +137,7 @@ FORMS += \
 
 INCLUDEPATH += $$[QT_INSTALL_PREFIX]/../../Tools/OpenSSL/Win_x64/include QCustomPlot/src
 
-LIBS += -L$$[QT_INSTALL_PREFIX]/../../Tools/OpenSSL/Win_x64/lib -llibcrypto
+LIBS += -L$$[QT_INSTALL_PREFIX]/../../Tools/OpenSSL/Win_x64/lib -llibcrypto -lAdvapi32
 
 RC_ICONS = app.ico
 

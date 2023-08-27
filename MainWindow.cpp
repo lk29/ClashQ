@@ -51,8 +51,12 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(actionOpenWorkDir, &QAction::triggered, this, &MainWindow::openWorkDirTriggered);
 
     m_trayIconMenu.addSeparator();
+    QAction *actionAutoStart = m_trayIconMenu.addAction(QStringLiteral("Auto Start"));
     QAction *actionQuit = m_trayIconMenu.addAction(QStringLiteral("Quit"));
+    actionAutoStart->setCheckable(true);
+    actionAutoStart->setChecked(isAutoStart());
     connect(actionQuit, &QAction::triggered, this, &MainWindow::close);
+    connect(actionAutoStart, &QAction::triggered, this, &MainWindow::autoStartTriggered);
 
     setIcon(QIcon::Disabled);
     m_trayIcon.setContextMenu(&m_trayIconMenu);
@@ -275,6 +279,19 @@ void MainWindow::setIcon(QIcon::Mode mode)
     }
 }
 
+bool MainWindow::isAutoStart()
+{
+    DWORD type = REG_NONE;
+    HKEY hKey;
+    if (RegOpenKeyEx(HKEY_CURRENT_USER, LR"(SOFTWARE\Microsoft\Windows\CurrentVersion\Run)", 0, KEY_QUERY_VALUE, &hKey) == ERROR_SUCCESS) {
+        if (RegQueryValueExW(hKey, L"ClashQ", 0, &type, nullptr, nullptr) != ERROR_SUCCESS) {
+            ui->logPage->appendLog("failed to query auto start");
+        }
+        RegCloseKey(hKey);
+    }
+    return type == REG_SZ;
+}
+
 void MainWindow::fetchCfgReplyFinished()
 {
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
@@ -423,6 +440,25 @@ void MainWindow::openClashCfgTriggered()
 void MainWindow::openWorkDirTriggered()
 {
     QDesktopServices::openUrl(QUrl::fromLocalFile(getFilePath(PathType::BaseDir)));
+}
+
+void MainWindow::autoStartTriggered(bool checked)
+{
+    HKEY hKey;
+    if (RegOpenKeyEx(HKEY_CURRENT_USER, LR"(SOFTWARE\Microsoft\Windows\CurrentVersion\Run)", 0, KEY_SET_VALUE, &hKey) == ERROR_SUCCESS) {
+        if (checked) {
+            QString appPath = QCoreApplication::applicationFilePath();
+            appPath = QDir::toNativeSeparators(appPath);
+            if (RegSetValueExW(hKey, L"ClashQ", 0, REG_SZ, (BYTE *)appPath.toStdWString().c_str(), (appPath.length() + 1) * sizeof(wchar_t)) != ERROR_SUCCESS) {
+                ui->logPage->appendLog("failed to enable auto start");
+            }
+        } else {
+            if (RegDeleteValueW(hKey, L"ClashQ") != ERROR_SUCCESS) {
+                ui->logPage->appendLog("failed to disable auto start");
+            }
+        }
+        RegCloseKey(hKey);
+    }
 }
 
 QString MainWindow::getFilePath(PathType pt)
