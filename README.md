@@ -5,11 +5,11 @@ Put clash core (clash.exe) and the configuration file (config.ini) of this appli
 ## Configuration file
 
 ```ini
-[General]
+[profile]
 # decryption key
 key=abcd5678
 # profile name will be appended to url when fetching clash configuration
-profile=office, home
+profiles=profile1, profile2
 url=https://xxx.yyy
 ```
 

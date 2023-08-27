@@ -28,7 +28,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     Application::instance()->installNativeEventFilter(this);
 
-    QStringList profiles = m_settings.value(QStringLiteral("profile")).toStringList();
+    QStringList profiles = m_settings.value(QStringLiteral("profile/profiles")).toStringList();
     profiles.removeAll(QString());
     for (const QString &prof : qAsConst(profiles)) {
         QString text("Profile \"");
@@ -78,7 +78,7 @@ MainWindow::MainWindow(QWidget *parent) :
         ui->logPage->appendLog("no profile");
     } else {
         auto actions = m_actionGroup.actions();
-        int profIdx = m_settings.value(QStringLiteral("recent"), 0).toInt();
+        int profIdx = m_settings.value(QStringLiteral("state/profile"), 0).toInt();
         if (profIdx < 0 || profIdx >= actions.size()) {
             profIdx = 0;
         }
@@ -143,7 +143,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
         auto actions = m_actionGroup.actions();
         for (int i = 0; i < actions.size(); ++i) {
             if (actions.at(i)->isChecked()) {
-                m_settings.setValue(QStringLiteral("recent"), i);
+                m_settings.setValue(QStringLiteral("state/profile"), i);
                 break;
             }
         }
@@ -193,7 +193,7 @@ void MainWindow::fetchConfig(const QString &profile)
     tooltip += profile;
     m_trayIcon.setToolTip(tooltip);
 
-    QUrl url(m_settings.value(QStringLiteral("url")).toString());
+    QUrl url(m_settings.value(QStringLiteral("profile/url")).toString());
     if (!url.isValid()) {
         ui->logPage->appendLog(url.errorString());
         return;
@@ -236,7 +236,7 @@ QByteArray MainWindow::decryptConfig(const QByteArray &ba)
 {
     QByteArray result;
 
-    QString key = m_settings.value(QStringLiteral("key")).toString();
+    QString key = m_settings.value(QStringLiteral("profile/key")).toString();
     if (key.isEmpty()) {
         ui->logPage->appendLog("key is empty");
         return result;

@@ -15,6 +15,7 @@ TrafficPage::TrafficPage(QWidget *parent) :
     m_reqOngoing(false)
 {
     ui->setupUi(this);
+    ui->plot->legend->setBrush(QBrush(QColor(255, 255, 255, 200)));
     ui->plot->legend->setVisible(true);
     ui->plot->xAxis->setRange(0, s_maxX);
     ui->plot->xAxis->setTickLabels(false);
