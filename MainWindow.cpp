@@ -75,7 +75,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(&m_clash, &QProcess::started, this, &MainWindow::clashStarted);
 
     if (profiles.isEmpty()) {
-        ui->logPage->appendLog("no profile");
+        ui->logPage->appendLog(LogLevel::Error, "no profile");
     } else {
         auto actions = m_actionGroup.actions();
         int profIdx = m_settings.value(QStringLiteral("state/profile"), 0).toInt();
@@ -195,7 +195,7 @@ void MainWindow::fetchConfig(const QString &profile)
 
     QUrl url(m_settings.value(QStringLiteral("profile/url")).toString());
     if (!url.isValid()) {
-        ui->logPage->appendLog(url.errorString());
+        ui->logPage->appendLog(LogLevel::Error, url.errorString());
         return;
     }
 
@@ -219,7 +219,7 @@ void MainWindow::fetchConfig(const QString &profile)
     QString logText("fetching configuration for profile \"");
     logText += profile;
     logText += '\"';
-    ui->logPage->appendLog(logText);
+    ui->logPage->appendLog(LogLevel::Info, logText);
 }
 
 void MainWindow::fetchClashVer()
@@ -238,7 +238,7 @@ QByteArray MainWindow::decryptConfig(const QByteArray &ba)
 
     QString key = m_settings.value(QStringLiteral("profile/key")).toString();
     if (key.isEmpty()) {
-        ui->logPage->appendLog("key is empty");
+        ui->logPage->appendLog(LogLevel::Error, "key is empty");
         return result;
     }
 
@@ -259,7 +259,7 @@ QByteArray MainWindow::decryptConfig(const QByteArray &ba)
 
     if (!BIO_get_cipher_status(cipherBio)) {
         result.clear();
-        ui->logPage->appendLog("failed to decrypt configuration");
+        ui->logPage->appendLog(LogLevel::Error, "failed to decrypt configuration");
     }
 
     BIO_free_all(cipherBio);
@@ -285,7 +285,7 @@ bool MainWindow::isAutoStart()
     HKEY hKey;
     if (RegOpenKeyEx(HKEY_CURRENT_USER, LR"(SOFTWARE\Microsoft\Windows\CurrentVersion\Run)", 0, KEY_QUERY_VALUE, &hKey) == ERROR_SUCCESS) {
         if (RegQueryValueExW(hKey, L"ClashQ", 0, &type, nullptr, nullptr) != ERROR_SUCCESS) {
-            ui->logPage->appendLog("failed to query auto start");
+            ui->logPage->appendLog(LogLevel::Warning, "failed to query auto start");
         }
         RegCloseKey(hKey);
     }
@@ -298,13 +298,13 @@ void MainWindow::fetchCfgReplyFinished()
     reply->deleteLater();
 
     if (reply->error() != QNetworkReply::NoError) {
-        ui->logPage->appendLog(reply->errorString());
+        ui->logPage->appendLog(LogLevel::Error, reply->errorString());
         return;
     }
 
     QFile file(getFilePath(PathType::ClashConfig));
     if (!file.open(QIODevice::WriteOnly)) {
-        ui->logPage->appendLog(file.errorString());
+        ui->logPage->appendLog(LogLevel::Error, file.errorString());
         return;
     }
 
@@ -312,7 +312,7 @@ void MainWindow::fetchCfgReplyFinished()
     if (ba.isEmpty()) {
         return;
     }
-    ui->logPage->appendLog("decrypt configuration successfully");
+    ui->logPage->appendLog(LogLevel::Info, "decrypt configuration successfully");
 
     file.write(ba);
     file.close();
@@ -329,7 +329,7 @@ void MainWindow::getVerReplyFinished()
         QString log("failed to get clash version (");
         log += reply->errorString();
         log += ')';
-        ui->logPage->appendLog(log);
+        ui->logPage->appendLog(LogLevel::Warning, log);
         QTimer::singleShot(1000, this, &MainWindow::fetchClashVer);
         return;
     }
@@ -350,36 +350,39 @@ void MainWindow::clashErrorOccurred(QProcess::ProcessError error)
 {
     switch (error) {
     case QProcess::FailedToStart:
-        ui->logPage->appendLog("failed to start clash subprocess");
+        ui->logPage->appendLog(LogLevel::Error, "failed to start clash subprocess");
         break;
     case QProcess::Crashed:
-        ui->logPage->appendLog("clash subprocess crashed");
+        ui->logPage->appendLog(LogLevel::Warning, "clash subprocess crashed");
         break;
     case QProcess::Timedout:
-        ui->logPage->appendLog("wait for clash subprocess time out");
+        ui->logPage->appendLog(LogLevel::Warning, "wait for clash subprocess time out");
         break;
     case QProcess::WriteError:
-        ui->logPage->appendLog("failed to write to clash subprocess");
+        ui->logPage->appendLog(LogLevel::Warning, "failed to write to clash subprocess");
         break;
     case QProcess::ReadError:
-        ui->logPage->appendLog("failed to read from clash subprocess");
+        ui->logPage->appendLog(LogLevel::Warning, "failed to read from clash subprocess");
         break;
     default:
-        ui->logPage->appendLog("unknown error occurred in clash subprocess");
+        ui->logPage->appendLog(LogLevel::Warning, "unknown error occurred in clash subprocess");
         break;
     }
 }
 
 void MainWindow::clashFinished(int exitCode, QProcess::ExitStatus exitStatus)
 {
+    LogLevel level;
     QString logText("clash ");
     if (exitStatus == QProcess::NormalExit) {
+        level = LogLevel::Info;
         logText += "exited with code ";
         logText += QString::number(exitCode);
     } else {
+        level = LogLevel::Warning;
         logText += "crashed";
     }
-    ui->logPage->appendLog(logText);
+    ui->logPage->appendLog(level, logText);
 
     setIcon(QIcon::Disabled);
 }
@@ -450,11 +453,11 @@ void MainWindow::autoStartTriggered(bool checked)
             QString appPath = QCoreApplication::applicationFilePath();
             appPath = QDir::toNativeSeparators(appPath);
             if (RegSetValueExW(hKey, L"ClashQ", 0, REG_SZ, (BYTE *)appPath.toStdWString().c_str(), (appPath.length() + 1) * sizeof(wchar_t)) != ERROR_SUCCESS) {
-                ui->logPage->appendLog("failed to enable auto start");
+                ui->logPage->appendLog(LogLevel::Warning, "failed to enable auto start");
             }
         } else {
             if (RegDeleteValueW(hKey, L"ClashQ") != ERROR_SUCCESS) {
-                ui->logPage->appendLog("failed to disable auto start");
+                ui->logPage->appendLog(LogLevel::Warning, "failed to disable auto start");
             }
         }
         RegCloseKey(hKey);

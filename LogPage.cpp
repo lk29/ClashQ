@@ -21,17 +21,17 @@ int LogPage::avgCharWidth() const
     return ui->logEdit->fontMetrics().averageCharWidth();
 }
 
-void LogPage::appendLog(const char *text)
+void LogPage::appendLog(LogLevel level, const char *text)
 {
-    QString html(genLogHeader());
+    QString html(genLogHeader(level));
     html += text;
 
     ui->logEdit->appendHtml(html);
 }
 
-void LogPage::appendLog(const QString &text)
+void LogPage::appendLog(LogLevel level, const QString &text)
 {
-    QString html(genLogHeader());
+    QString html(genLogHeader(level));
     html += text;
 
     ui->logEdit->appendHtml(html);
@@ -67,14 +67,14 @@ void LogPage::appendClashLog(const QString &text)
             level = LogLevel::Unknown;
         }
 
-        QString html = genLogHeader(match.captured(CapTime), level);
+        QString html = genLogHeader(level, match.captured(CapTime));
         html += match.capturedRef(CapMsg);
 
         ui->logEdit->appendHtml(html);
     } while (iter.hasNext());
 }
 
-QString LogPage::genLogHeader(const QString &time, LogLevel level)
+QString LogPage::genLogHeader(LogLevel level, const QString &time)
 {
     QString result;
 

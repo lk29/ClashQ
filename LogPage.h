@@ -8,6 +8,14 @@ namespace Ui {
 class LogPage;
 }
 
+enum class LogLevel {
+    Debug,
+    Info,
+    Warning,
+    Error,
+    Unknown,
+};
+
 class LogPage : public QWidget
 {
     Q_OBJECT
@@ -18,20 +26,12 @@ public:
 
     int avgCharWidth() const;
 
-    void appendLog(const char *text);
-    void appendLog(const QString &text);
+    void appendLog(LogLevel level, const char *text);
+    void appendLog(LogLevel level, const QString &text);
     void appendClashLog(const QString &text);
 
 private:
-    enum class LogLevel {
-        Debug,
-        Info,
-        Warning,
-        Error,
-        Unknown,
-    };
-
-    QString genLogHeader(const QString &time=QString(), LogLevel level=LogLevel::Info);
+    QString genLogHeader(LogLevel level, const QString &time=QString());
 
 private:
     Ui::LogPage *ui;
