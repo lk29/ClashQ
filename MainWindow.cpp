@@ -206,12 +206,15 @@ void MainWindow::fetchConfig(const QString &profile)
     url.setPath(path);
     url.setQuery(m_iv);
 
-    QSslConfiguration sslConfig = QSslConfiguration::defaultConfiguration();
-    sslConfig.setPeerVerifyMode(QSslSocket::VerifyNone);
-
     QNetworkRequest request(url);
-    request.setSslConfiguration(sslConfig);
     request.setHeader(QNetworkRequest::UserAgentHeader, "ClashQ");
+
+    if (m_settings.value(QStringLiteral("profile/insecure")).toBool()) {
+        QSslConfiguration sslConfig = QSslConfiguration::defaultConfiguration();
+        sslConfig.setPeerVerifyMode(QSslSocket::VerifyNone);
+
+        request.setSslConfiguration(sslConfig);
+    }
 
     QNetworkReply *reply = Application::netMgmr().get(request);
     connect(reply, &QNetworkReply::finished, this, &MainWindow::fetchCfgReplyFinished);
