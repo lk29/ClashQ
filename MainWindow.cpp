@@ -70,7 +70,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_clash.closeWriteChannel();
 
     connect(&m_clash, &QProcess::errorOccurred, this, &MainWindow::clashErrorOccurred);
-    connect(&m_clash, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this, &MainWindow::clashFinished);
+    connect(&m_clash, qOverload<int, QProcess::ExitStatus>(&QProcess::finished), this, &MainWindow::clashFinished);
     connect(&m_clash, &QProcess::readyReadStandardOutput, this, &MainWindow::clashStdoutReady);
     connect(&m_clash, &QProcess::started, this, &MainWindow::clashStarted);
 
