@@ -11,6 +11,7 @@ key=abcd5678
 # profile name will be appended to url when fetching clash configuration
 profiles=profile1, profile2
 url=https://xxx.yyy
+# insecure=true
 ```
 
 ## Screenshot

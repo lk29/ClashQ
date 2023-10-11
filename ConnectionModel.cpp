@@ -5,13 +5,13 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QNetworkReply>
-#include <QTimer>
 
 ConnectionModel::ConnectionModel(QObject *parent) :
-    QAbstractTableModel(parent),
-    m_reqOngoing(false)
+    QAbstractTableModel(parent)
 {
-    connect(&Application::mainWindow(), &MainWindow::becomeVisible, this, &ConnectionModel::sendRequest);
+    m_timer.setInterval(1000);
+    connect(&m_timer, &QTimer::timeout, this, &ConnectionModel::sendRequest);
+    connect(&Application::mainWindow(), &MainWindow::becomeVisible, &m_timer, qOverload<>(&QTimer::start));
 }
 
 QVariant ConnectionModel::headerData(int section, Qt::Orientation orientation, int role) const
@@ -142,29 +142,18 @@ QVariant ConnectionModel::data(const QModelIndex &index, int role) const
 
 void ConnectionModel::sendRequest()
 {
-    if (!m_reqOngoing) {
-        m_reqOngoing = true;
+    QUrl url(Application::clashApiUrl());
+    url.setPath(QStringLiteral("/connections"));
 
-        QUrl url(Application::clashApiUrl());
-        url.setPath(QStringLiteral("/connections"));
-
-        QNetworkRequest request(url);
-        QNetworkReply *reply = Application::netMgmr().get(request);
-        connect(reply, &QNetworkReply::finished, this, &ConnectionModel::replyFinished);
-    }
+    QNetworkRequest request(url);
+    QNetworkReply *reply = Application::netMgmr().get(request);
+    connect(reply, &QNetworkReply::finished, this, &ConnectionModel::replyFinished);
 }
 
 void ConnectionModel::replyFinished()
 {
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
     reply->deleteLater();
-
-    m_reqOngoing = false;
-    if (!Application::mainWindow().isVisible() || Application::mainWindow().isMinimized()) {
-        return;
-    }
-
-    QTimer::singleShot(1000, this, &ConnectionModel::sendRequest);
 
     QJsonDocument jsonDoc(QJsonDocument::fromJson(reply->readAll()));
     QJsonObject jsonObj(jsonDoc.object());
@@ -238,5 +227,9 @@ void ConnectionModel::replyFinished()
         beginRemoveRows(QModelIndex(), idx, idx);
         m_connInfos.remove(idx);
         endRemoveRows();
+    }
+
+    if (!Application::mainWindow().isVisible()) {
+        m_timer.stop();
     }
 }

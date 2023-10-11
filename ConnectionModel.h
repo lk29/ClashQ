@@ -3,6 +3,7 @@
 
 #include <QAbstractTableModel>
 #include <QDateTime>
+#include <QTimer>
 
 class ConnectionModel : public QAbstractTableModel
 {
@@ -49,7 +50,7 @@ private:
         QString type;
     };
 
-    bool m_reqOngoing;
+    QTimer m_timer;
     QVector<ConnInfo> m_connInfos;
 };
 

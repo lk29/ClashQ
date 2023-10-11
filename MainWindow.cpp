@@ -128,7 +128,11 @@ bool MainWindow::nativeEventFilter(const QByteArray & /*eventType*/, void *messa
 
 void MainWindow::showEvent(QShowEvent *event)
 {
-    emit becomeVisible();
+    // showEvent will be called twice with spontaneous set to true and false.See
+    // description of QShowEvent.
+    if (!event->spontaneous()) {
+        emit becomeVisible();
+    }
     QMainWindow::showEvent(event);
 }
 
@@ -157,12 +161,6 @@ bool MainWindow::event(QEvent *event)
         if (isMinimized()) {
             if (!event->spontaneous()) {
                 QTimer::singleShot(150, this, &MainWindow::hide);
-            }
-        } else {
-            // If application is minimized through Win+D, showEvent won't be called if application is restored
-            // after clicking taskbar icon.
-            if (static_cast<QWindowStateChangeEvent *>(event)->oldState().testFlag(Qt::WindowMinimized)) {
-                emit becomeVisible();
             }
         }
         break;

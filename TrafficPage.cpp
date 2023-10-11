@@ -72,7 +72,7 @@ void TrafficPage::sendRequest()
 void TrafficPage::replyReadyRead()
 {
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
-    if (!Application::mainWindow().isVisible() || Application::mainWindow().isMinimized()) {
+    if (!Application::mainWindow().isVisible()) {
         QCPGraph *ulGraph = ui->plot->graph(0);
         QCPGraph *dlGraph = ui->plot->graph(1);
         ulGraph->data()->clear();
@@ -127,7 +127,4 @@ void TrafficPage::replyFinished()
     reply->deleteLater();
 
     m_reqOngoing = false;
-    if (Application::mainWindow().isVisible() && !Application::mainWindow().isMinimized()) {
-        QTimer::singleShot(1000, this, &TrafficPage::sendRequest);
-    }
 }
