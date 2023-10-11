@@ -17,7 +17,7 @@ jobs:
           host: 'windows'
           target: 'desktop'
           arch: 'win64_msvc2019_64'
-          tools: 'tools_openssl_x64'
+          tools: 'tools_opensslv3_x64'
           cache: true
 
       - name: Checkout source code
