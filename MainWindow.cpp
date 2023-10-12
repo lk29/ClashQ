@@ -258,7 +258,7 @@ QByteArray MainWindow::decryptConfig(const QByteArray &ba)
         result.append(buf, len);
     }
 
-    if (!BIO_get_cipher_status(cipherBio)) {
+    if (BIO_get_cipher_status(cipherBio) <= 0) {
         result.clear();
         ui->logPage->appendLog(LogLevel::Error, "failed to decrypt configuration");
     }

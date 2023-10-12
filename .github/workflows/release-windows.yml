@@ -17,8 +17,15 @@ jobs:
           host: 'windows'
           target: 'desktop'
           arch: 'win64_msvc2019_64'
-          tools: 'tools_opensslv3_x64'
+          tools: 'tools_cmake' # Make install-qt-action add the ENV variable IQTA_TOOLS, although cmake is useless for this build
           cache: true
+
+      # Install OpenSSL v1 manually since v1 is no longer available in Qt official repository
+      - name: Install OpenSSL v1.1.1
+        shell: cmd
+        run: |
+          curl -O http://ftp.vim.org/languages/qt/online/qtsdkrepository/windows_x86/desktop/.tools_openssl_x64/qt.tools.openssl.win_x64/1.1.1-22openssl_1.1.1v_prebuild_x64.7z
+          7z x -o${{env.IQTA_TOOLS}}\.. 1.1.1-22openssl_1.1.1v_prebuild_x64.7z
 
       - name: Checkout source code
         uses: actions/checkout@v3
