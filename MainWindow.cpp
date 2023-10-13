@@ -128,10 +128,10 @@ bool MainWindow::nativeEventFilter(const QByteArray & /*eventType*/, void *messa
 
 void MainWindow::showEvent(QShowEvent *event)
 {
-    // showEvent will be called twice with spontaneous set to true and false.See
+    // showEvent will be called twice with spontaneous set to true and false. See
     // description of QShowEvent.
-    if (!event->spontaneous()) {
-        emit becomeVisible();
+    if (!event->spontaneous() && m_clash.state() == QProcess::Running) {
+        emit clashApiReady();
     }
     QMainWindow::showEvent(event);
 }
@@ -398,6 +398,9 @@ void MainWindow::clashStarted()
 {
     setIcon(QIcon::Normal);
     QTimer::singleShot(1000, this, &MainWindow::fetchClashVer);
+    if (isVisible()) {
+        emit clashApiReady();
+    }
 }
 
 void MainWindow::trayIconActivated(QSystemTrayIcon::ActivationReason reason)

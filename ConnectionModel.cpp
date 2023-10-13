@@ -11,7 +11,7 @@ ConnectionModel::ConnectionModel(QObject *parent) :
 {
     m_timer.setInterval(1000);
     connect(&m_timer, &QTimer::timeout, this, &ConnectionModel::sendRequest);
-    connect(&Application::mainWindow(), &MainWindow::becomeVisible, &m_timer, qOverload<>(&QTimer::start));
+    connect(&Application::mainWindow(), &MainWindow::clashApiReady, &m_timer, qOverload<>(&QTimer::start));
 }
 
 QVariant ConnectionModel::headerData(int section, Qt::Orientation orientation, int role) const

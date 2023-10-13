@@ -27,7 +27,7 @@ public:
     virtual bool nativeEventFilter(const QByteArray &eventType, void *message, long *result) override;
 
 signals:
-    void becomeVisible();
+    void clashApiReady();
 
 private:
     virtual void showEvent(QShowEvent *event) override;

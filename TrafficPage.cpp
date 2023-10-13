@@ -38,7 +38,7 @@ TrafficPage::TrafficPage(QWidget *parent) :
     dlGraph->setPen(QPen(Qt::red));
     dlGraph->setBrush(dlBrush);
 
-    connect(&Application::mainWindow(), &MainWindow::becomeVisible, this, &TrafficPage::sendRequest);
+    connect(&Application::mainWindow(), &MainWindow::clashApiReady, this, &TrafficPage::sendRequest);
 }
 
 TrafficPage::~TrafficPage()
